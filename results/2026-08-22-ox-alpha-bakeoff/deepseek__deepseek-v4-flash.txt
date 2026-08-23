@@ -1,0 +1,28 @@
+CODE:
+```python
+def is_valid_isbn10(code: str) -> bool:
+    # Remove hyphens
+    cleaned = code.replace('-', '')
+    if len(cleaned) != 10:
+        return False
+    
+    # Process first 9 characters
+    digits = []
+    for i, ch in enumerate(cleaned):
+        if ch.isdigit():
+            digits.append(int(ch))
+        elif ch == 'X' and i == 9:  # X only allowed in last position
+            digits.append(10)
+        else:
+            return False
+    
+    # Calculate weighted sum: d_i * (10-i) for i in 0..9
+    total = sum(d * (10 - i) for i, d in enumerate(digits))
+    return total % 11 == 0
+```
+
+EXPLANATION:
+The ISBN-10 checksum works by computing a weighted sum of the first 9 digits (each multiplied by a decreasing weight from 10 down to 2) plus the check digit (multiplied by 1), and requiring the total to be divisible by 11. The check digit can be 0-9 or 'X' (representing 10). This scheme detects single-digit errors because changing any digit by a value Δ changes the weighted sum by Δ * weight, and since weight and 11 are coprime, the error is always detected unless Δ is a multiple of 11. Transposition errors (swapping adjacent digits i and i+1) change the sum by (d_i * w_i + d_{i+1} * w_{i+1}) - (d_{i+1} * w_i + d_i * w_{i+1}) = (d_i - d_{i+1}) * (w_i - w_{i+1}) = (d_i - d_{i+1}) * (10-i - (9-i)) = (d_i - d_{i+1}) * 1, which is only undetected if d_i = d_{i+1} (not a true transposition) or if the difference is a multiple of 11 (impossible for two digits 0-9), so all adjacent transpositions are detected.
+
+EDGE_CASE:
+The edge case most implementations get wrong is allowing 'X' (value 10) in non-last positions (e.g., "X123456789") or requiring uppercase without handling lowercase 'x', but my code explicitly restricts 'X' to only position 9 (the last) and does not accept lowercase.

@@ -1,0 +1,51 @@
+The task: write a Python function `is_valid_isbn10(code: str) -> bool` that validates ISBN-10 strings, allowing hyphens, including checksum. The check digit may be 'X' (value 10) in the last position.
+
+ISBN-10 checksum: digits d1..d10 (1-indexed), weighted sum sum(d_i * (11 - i)) for i=1..10, i.e., d1*10 + d2*9 + ... + d10*1, must be divisible by 11. Equivalently, using 0-indexed i in 0..9: d_i * (10 - i), sum must be ≡ 0 mod 11.
+
+Edge cases:
+- Hyphens allowed (should be stripped, but only hyphens — spaces? The task says allow hyphens; I'll strip only hyphens, maybe also spaces? Task says hyphens. I'll strip hyphens only, or maybe hyphens and spaces. Let me stick to hyphens as specified.)
+- 'X' only allowed in last position (value 10). Lowercase 'x'? Many implementations get wrong: lowercase 'x' should probably be accepted or rejected — ambiguous. A common edge case: 'X' appearing anywhere other than the last position must be rejected; also lowercase 'x'.
+- Length must be exactly 10 after removing hyphens.
+- Empty string, non-digit characters must be rejected.
+- Leading/trailing whitespace? Could reject.
+
+The classic edge case most implementations get wrong: accepting 'X' in non-final positions, or treating lowercase 'x' incorrectly, or forgetting that the sum must be divisible by 11 including check digit value 10. Another common one: `int()` conversion of strings like 'X' works? No. Another: strings with Unicode digits like '٣' (Arabic-Indic digits) — `str.isdigit()` returns True for those but `int()` also converts them! Actually `int('٣')` = 3. So using `isdigit()` and `int()` would accept Unicode digits. That's a subtle edge case. But the most commonly cited: 'X' only valid as last character.
+
+I'll handle: strip hyphens, check length == 10, first 9 chars must be ASCII digits '0'-'9', last char digit or 'X'/'x' (I'll accept both cases, or just 'X'? The spec says 'X'. I'll accept both 'X' and 'x' to be lenient, but mention it). Actually to be safe, accept 'X' or 'x' — many real validators accept both. Hmm, but strict spec says 'X'. I'll accept both and note it.
+
+Compute weighted sum with weights 10 down to 1, check % 11 == 0.
+
+Edge case to mention: 'X' appearing in any position other than the last (e.g., "X123456789" or "12X4567890") must be rejected — many implementations naively map 'X'→10 for all positions. Also lowercase 'x'. I'll pick one: "X allowed only in the final position" — my code validates first 9 chars are digits and only the last may be X/x.
+
+Alternatively the Unicode digit edge case. I'll mention the X-position one as it's the classic.
+
+Code:
+
+```python
+def is_valid_isbn10(code: str) -> bool:
+    if not isinstance(code, str):
+        return False
+    digits = code.replace('-', '')
+    if len(digits) != 10:
+        return False
+    total = 0
+    for i, ch in enumerate(digits):
+        if '0' <= ch <= '9':
+            value = ord(ch) - ord('0')
+        elif i == 9 and ch in ('X', 'x'):
+            value = 10
+        else:
+            return False
+        total += value * (10 - i)
+    return total % 11 == 0
+```
+
+Using explicit '0' <= ch <= '9' avoids Unicode digit acceptance.
+
+Explanation paragraph: The checksum computes sum of each digit multiplied by a weight from 10 down to 1; the check digit is chosen so the total is a multiple of 11. Because 11 is prime and the weights are all distinct and non-zero modulo 11, swapping two adjacent digits changes the sum by (a−b)(w_i − w_j) which is non-zero mod 11 when a≠b, so any single transposition breaks divisibility; likewise any single-digit error is caught because weights are non-zero mod 11.
+
+Edge case sentence: 'X' (value 10) is only valid as the tenth character — implementations that translate 'X' to 10 anywhere (or use int() after a blanket replace) wrongly accept codes like "3-598-X1587-X"? Hmm, example: "X123456789" — my code rejects any 'X' before the final position and also rejects lowercase... wait I accept lowercase x at the end. Fine.
+
+Let me double check example: ISBN "0-306-40615-2": digits 0306406152. Sum: 0*10+3*9+0*8+6*7+4*6+0*5+6*4+1*3+5*2+2*1 = 0+27+0+42+24+0+24+3+10+2 = 132 = 11*12. Valid. Good.
+
+Example with X: "0-8044-2957-X": digits 080442957X → 0*10

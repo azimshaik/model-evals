@@ -1,0 +1,31 @@
+CODE:
+```python
+def is_valid_isbn10(code: str) -> bool:
+    if not isinstance(code, str):
+        return False
+
+    # Remove hyphens and surrounding whitespace
+    cleaned = code.replace("-", "").strip()
+
+    # ISBN-10 must be exactly 10 characters after cleaning
+    if len(cleaned) != 10:
+        return False
+
+    total = 0
+    for i, ch in enumerate(cleaned):
+        if ch.isdigit():
+            value = int(ch)
+        elif ch == "X" and i == 9:  # 'X' allowed ONLY as the final check digit
+            value = 10
+        else:
+            return False  # rejects non-digits and misplaced 'X'
+        total += value * (10 - i)
+
+    return total % 11 == 0
+```
+
+EXPLANATION:
+An ISBN-10 consists of nine digits plus a check digit, where each character is multiplied by a positional weight running from 10 down to 1 (so the first digit gets weight 10 and the check digit gets weight 1); the weighted sum must be congruent to 0 modulo 11, with the check digit 'X' representing the value 10. This scheme detects all single-digit errors because changing any one digit alters the sum by a nonzero amount less than 11 that cannot wrap around to a multiple of 11, and it detects all transpositions of two different digits because swapping digits at positions i and j changes the sum by (d_j − d_i)·(w_i − w_j); since 11 is prime and both factor differences lie strictly between −11 and 11, the product can be divisible by 11 only if one factor is zero—meaning either the digits were identical (no real change) or the positions were identical (impossible for a swap)—so every genuine transposition breaks the divisibility condition and is caught.
+
+EDGE_CASE:
+A check digit 'X' appearing anywhere other than the last position (e.g., "X123456789" or "12345678X9")—many naive implementations either accept 'X' anywhere or crash calling int('X'); my code explicitly permits 'X' only at index 9 and returns False otherwise.

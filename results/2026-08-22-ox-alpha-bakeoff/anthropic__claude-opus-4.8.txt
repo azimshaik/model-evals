@@ -1,0 +1,28 @@
+CODE:
+```python
+def is_valid_isbn10(code: str) -> bool:
+    # Remove hyphens
+    cleaned = code.replace('-', '')
+
+    # Must be exactly 10 characters after removing hyphens
+    if len(cleaned) != 10:
+        return False
+
+    total = 0
+    for i, char in enumerate(cleaned):
+        if char.isdigit():
+            value = int(char)
+        elif char == 'X' and i == 9:
+            # 'X' allowed only in the last position, represents 10
+            value = 10
+        else:
+            return False
+        total += value * (10 - i)
+
+    return total % 11 == 0
+```
+EXPLANATION:
+Each of the ten characters is assigned a positional weight from 10 down to 1 (the first digit is multiplied by 10, the second by 9, and so on until the check digit is multiplied by 1). These weighted values are summed, and a valid ISBN-10 requires that this sum be divisible by 11; the check digit (which can be 'X' to represent the value 10) is chosen precisely so the total lands on a multiple of 11. Because each position carries a *distinct* weight, swapping two adjacent (or any two different) digits changes the weighted sum by an amount proportional to the difference of the digits times the difference of their weights—unless that product is a multiple of 11, the modular result changes and the error is detected. Since the weights differ and digits range 0–9, the only way a transposition escapes detection is if the two digits are equal (in which case swapping them produces no actual change), so all genuine transposition errors are caught.
+
+EDGE_CASE:
+Many implementations wrongly accept 'X' anywhere in the string or treat it case-insensitively as a normal digit; this code accepts 'X' only in the final position (index 9) with value 10 and rejects it elsewhere.
