@@ -1,6 +1,6 @@
 # The Stealth Ox Bake-Off: Testing the Mystery AI Model Against the Field
 
-**Date:** Aug 22, 2026 · **Setup:** Azim Shaik's Mac via OpenRouter · **Total cost of experiment: $0.022**
+**Date:** Aug 22, 2026 · **Setup:** OpenRouter · **Total cost of experiment: $0.022**
 
 ---
 
