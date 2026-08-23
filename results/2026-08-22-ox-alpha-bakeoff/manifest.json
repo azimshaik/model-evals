@@ -1,0 +1,33 @@
+[
+ {
+  "model": "z-ai/glm-5.3",
+  "ok": true,
+  "elapsed_s": 23.0,
+  "content": "The task: write a Python function `is_valid_isbn10(code: str) -> bool` that validates ISBN-10 strings, allowing hyphens, including checksum. The check digit may be 'X' (value 10) in the last position.\n\nISBN-10 checksum: digits d1..d10 (1-indexed), weighted sum sum(d_i * (11 - i)) for i=1..10, i.e., d1*10 + d2*9 + ... + d10*1, must be divisible by 11. Equivalently, using 0-indexed i in 0..9: d_i * (10 - i), sum must be \u2261 0 mod 11.\n\nEdge cases:\n- Hyphens allowed (should be stripped, but only hyphens \u2014 spaces? The task says allow hyphens; I'll strip only hyphens, maybe also spaces? Task says hyphens. I'll strip hyphens only, or maybe hyphens and spaces. Let me stick to hyphens as specified.)\n- 'X' only allowed in last position (value 10). Lowercase 'x'? Many implementations get wrong: lowercase 'x' should probably be accepted or rejected \u2014 ambiguous. A common edge case: 'X' appearing anywhere other than the last position must be rejected; also lowercase 'x'.\n- Length must be exactly 10 after removing hyphens.\n- Empty string, non-digit characters must be rejected.\n- Leading/trailing whitespace? Could reject.\n\nThe classic edge case most implementations get wrong: accepting 'X' in non-final positions, or treating lowercase 'x' incorrectly, or forgetting that the sum must be divisible by 11 including check digit value 10. Another common one: `int()` conversion of strings like 'X' works? No. Another: strings with Unicode digits like '\u0663' (Arabic-Indic digits) \u2014 `str.isdigit()` returns True for those but `int()` also converts them! Actually `int('\u0663')` = 3. So using `isdigit()` and `int()` would accept Unicode digits. That's a subtle edge case. But the most commonly cited: 'X' only valid as last character.\n\nI'll handle: strip hyphens, check length == 10, first 9 chars must be ASCII digits '0'-'9', last char digit or 'X'/'x' (I'll accept both cases, or just 'X'? The spec says 'X'. I'll accept both 'X' and 'x' to be lenient, but mention it). Actually to be safe, accept 'X' or 'x' \u2014 many real validators accept both. Hmm, but strict spec says 'X'. I'll accept both and note it.\n\nCompute weighted sum with weights 10 down to 1, check % 11 == 0.\n\nEdge case to mention: 'X' appearing in any position other than the last (e.g., \"X123456789\" or \"12X4567890\") must be rejected \u2014 many implementations naively map 'X'\u219210 for all positions. Also lowercase 'x'. I'll pick one: \"X allowed only in the final position\" \u2014 my code validates first 9 chars are digits and only the last may be X/x.\n\nAlternatively the Unicode digit edge case. I'll mention the X-position one as it's the classic.\n\nCode:\n\n```python\ndef is_valid_isbn10(code: str) -> bool:\n    if not isinstance(code, str):\n        return False\n    digits = code.replace('-', '')\n    if len(digits) != 10:\n        return False\n    total = 0\n    for i, ch in enumerate(digits):\n        if '0' <= ch <= '9':\n            value = ord(ch) - ord('0')\n        elif i == 9 and ch in ('X', 'x'):\n            value = 10\n        else:\n            return False\n        total += value * (10 - i)\n    return total % 11 == 0\n```\n\nUsing explicit '0' <= ch <= '9' avoids Unicode digit acceptance.\n\nExplanation paragraph: The checksum computes sum of each digit multiplied by a weight from 10 down to 1; the check digit is chosen so the total is a multiple of 11. Because 11 is prime and the weights are all distinct and non-zero modulo 11, swapping two adjacent digits changes the sum by (a\u2212b)(w_i \u2212 w_j) which is non-zero mod 11 when a\u2260b, so any single transposition breaks divisibility; likewise any single-digit error is caught because weights are non-zero mod 11.\n\nEdge case sentence: 'X' (value 10) is only valid as the tenth character \u2014 implementations that translate 'X' to 10 anywhere (or use int() after a blanket replace) wrongly accept codes like \"3-598-X1587-X\"? Hmm, example: \"X123456789\" \u2014 my code rejects any 'X' before the final position and also rejects lowercase... wait I accept lowercase x at the end. Fine.\n\nLet me double check example: ISBN \"0-306-40615-2\": digits 0306406152. Sum: 0*10+3*9+0*8+6*7+4*6+0*5+6*4+1*3+5*2+2*1 = 0+27+0+42+24+0+24+3+10+2 = 132 = 11*12. Valid. Good.\n\nExample with X: \"0-8044-2957-X\": digits 080442957X \u2192 0*10",
+  "usage": {
+   "prompt_tokens": 179,
+   "completion_tokens": 1200,
+   "total_tokens": 1379,
+   "cost": 0.00538468,
+   "is_byok": false,
+   "prompt_tokens_details": {
+    "cached_tokens": 128,
+    "cache_write_tokens": 0,
+    "audio_tokens": 0,
+    "video_tokens": 0
+   },
+   "cost_details": {
+    "upstream_inference_cost": 0.00538468,
+    "upstream_inference_prompt_cost": 0.00010468,
+    "upstream_inference_completions_cost": 0.00528
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 1197,
+    "image_tokens": 0,
+    "audio_tokens": 0
+   }
+  },
+  "cost": 0.00538468,
+  "file": "/Users/azimshaik/ox-test/eval/z-ai__glm-5.3.txt"
+ }
+]
