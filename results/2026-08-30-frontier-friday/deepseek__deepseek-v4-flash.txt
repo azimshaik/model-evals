@@ -1,0 +1,32 @@
+CODE:
+```python
+def is_valid_isbn10(code: str) -> bool:
+    # Remove hyphens
+    stripped = code.replace('-', '')
+    # Must be 10 characters after stripping
+    if len(stripped) != 10:
+        return False
+    total = 0
+    for i, ch in enumerate(stripped):
+        if i < 9:
+            # First nine characters must be digits
+            if not ch.isdigit():
+                return False
+            digit = int(ch)
+        else:
+            # Last character may be 'X' (value 10) or a digit
+            if ch in ('X', 'x'):
+                digit = 10
+            elif ch.isdigit():
+                digit = int(ch)
+            else:
+                return False
+        # Weight decreases from 10 to 1
+        total += digit * (10 - i)
+    # Valid if sum is divisible by 11
+    return total % 11 == 0
+```
+EXPLANATION:
+The ISBN-10 checksum is a weighted sum of the ten digits (where the check digit may be ‘X’ representing 10), with weights decreasing from 10 for the first digit to 1 for the last digit; the sum must be divisible by 11. This scheme detects single-digit errors because changing any digit alters the sum by a multiple of its weight, and since 11 is prime and weights are all different, a single substitution cannot be canceled by another change. It also catches most transposition errors because swapping two adjacent digits i and j (positions from 0 to 9) changes the sum by (d_i - d_j)*(w_i - w_j); the weight differences are never multiples of 11 when the digits differ, so the sum is unlikely to remain divisible by 11, making such errors detectable.
+EDGE_CASE:
+Most implementations incorrectly assume hyphens appear only in specific positions (e.g., 1-3-5-1 or 0-306-40615-2), but my code strips all hyphens before validation, so it correctly handles any placement of hyphens within the 10-character string.

@@ -1,0 +1,45 @@
+We need answer user's request. Need produce final exactly format:
+CODE:
+```python
+<your python code>
+```
+EXPLANATION:
+<one paragraph>
+EDGE_CASE:
+<one sentence>
+
+Need complete task. Function is_valid_isbn10(code: str) -> bool validates ISBN-10 allow hyphens, checksum: digits d1..d9 plus check digit, weighted sum of d_i * (10-i) for i in 0..9 must be divisible by 11. Check digit may be 'X' last position.
+
+Need think about implementation. Strip hyphens. Maybe also spaces? task says allow hyphens. Could remove '-' only. Need ensure length 10 after removing hyphens. First 9 chars digits. Last digit or X/x. Weighted sum: for i in range(10), digit values. i=0 weight 10, i=9 weight 1. Sum divisible by 11.
+
+Potential edge cases: Many implementations forget X only allowed in last position, or accept lowercase x? Could handle both? ISBN check digit may be X, often uppercase. We can allow 'X' or 'x'. But if strict maybe uppercase. Edge case most implementations get wrong: treating 'X' as valid anywhere or not allowing lowercase? Need list exactly one edge case. Could say: 'X' is only valid as the final check digit; code rejects X in first 9 positions and accepts lowercase x as equivalent? But if most get wrong: check digit 'X' representing 10. But maybe edge case: hyphens in arbitrary positions and empty after stripping? Need choose one.
+
+Need ensure code robust. Use str.isdigit? For Unicode digits? ISBN should ASCII digits. str.isdigit accepts superscripts? Actually '²'.isdigit() True but int('²') fails? int('²') ValueError. Need use c in '0123456789' to avoid Unicode digits. Edge case: non-ASCII digits? Could mention? Most implementations get wrong? Hmm.
+
+Task specifically ISBN-10 allow hyphens. Need maybe validate hyphen not leading/trailing? Allow hyphens anywhere? Usually hyphens are separators; can remove all. Could allow. But if code contains only hyphens? length after strip not 10.
+
+Need one paragraph explanation: checksum works by weighted sum modulo 11. Transposition errors: swapping adjacent digits changes sum by (d_i-d_{i+1})*(weight difference?) For ISBN-10 weights consecutive 10..1, adjacent swap changes sum by 1*(a-b) maybe if different, not divisible by 11 unless a=b? Actually if adjacent swap of digits at positions i and i+1 weights w and w-1, change = a(w-1)+b w - (a w+b(w-1)) = b-a. If a != b, change not multiple of 11 since digits 0..10 and difference -10..10, only 0. So catches adjacent transpositions. For non-adjacent transposition change = (a-b)*(w_i-w_j), weights difference <=9, product maybe multiple of 11? Since 11 prime, if difference not 0 and weight diff not 0, product not multiple 11 unless? digits values 0..10, difference can be 11? No max 10. weight diff max 9. product not multiple 11. So any transposition of distinct digits caught. Need mention modulo 11 prime and weights distinct? Actually weights 10..1 differences not multiples 11, digit differences not multiples 11 except 0, so transposition of distinct digits changes checksum.
+
+Need final exact. Could include code:
+
+def is_valid_isbn10(code: str) -> bool:
+    if not isinstance(code, str): return False? Type hint str. Could include.
+    s = code.replace('-', '')
+    if len(s) != 10: return False
+    total=0
+    for i,ch in enumerate(s):
+        if i == 9:
+            if ch == 'X' or ch == 'x': val=10
+            elif ch in '0123456789': val=int(ch)
+            else: return False
+        else:
+            if ch not in '0123456789': return False
+            val=int(ch)
+        total += val * (10 - i)
+    return total % 11 == 0
+
+Need maybe strip whitespace? Not required. Could allow spaces? No. If code has spaces, fail. Good.
+
+Edge case one sentence: "One common edge case is treating 'X' as a valid digit anywhere in the ISBN; this code allows 'X' only as the final check digit and converts it to value 10 for the checksum." But if most implementations get wrong maybe they fail to reject X in first nine. Could include lowercase? Maybe one sentence: "One common edge case is accepting 'X' outside the final position or mishandling its value as 10; this code rejects 'X' in the first nine positions and only uses value 10 for the last check digit (accepting lowercase x as well)." But that's more than one? It's one sentence. Need exactly one edge case. Maybe mention non-ASCII digits? But task likely expects X. Let's choose X only final. Need ensure one paragraph explanation. Could be concise.
+
+Need final format exactly. Ensure no extra text. CODE: then fenced. EXPLAN

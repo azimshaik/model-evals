@@ -1,0 +1,33 @@
+[
+ {
+  "model": "meta-llama/llama-4-maverick",
+  "ok": true,
+  "elapsed_s": 12.2,
+  "content": "CODE:\n```python\ndef is_valid_isbn10(code: str) -> bool:\n    code = code.replace('-', '').upper()\n    if len(code) != 10 or not code[:-1].isdigit() or not (code[-1].isdigit() or code[-1] == 'X'):\n        return False\n    checksum = sum((10 - i) * int(x) if x.isdigit() else 10 for i, x in enumerate(code))\n    return checksum % 11 == 0\n```\nEXPLANATION:\nThe checksum for an ISBN-10 code is calculated by multiplying each digit by a weight (10 for the first digit, 9 for the second, and so on down to 1 for the last digit), and then summing these products. The check digit is chosen such that this sum is divisible by 11. This scheme catches transposition errors because swapping two digits changes the weighted sum by a multiple of the difference between their weights, and since the weights are consecutive integers, this difference is never a multiple of 11 unless the digits are the same or the check digit is involved in a specific pattern that is still caught due to the divisibility rule.\nEDGE_CASE:\nOne edge case that some implementations get wrong is handling ISBN-10 codes with hyphens or the check digit 'X'; this implementation correctly removes hyphens and allows 'X' as a valid check digit by converting it to its numeric equivalent (10).",
+  "usage": {
+   "prompt_tokens": 176,
+   "completion_tokens": 299,
+   "total_tokens": 475,
+   "cost": 0.0002744,
+   "is_byok": false,
+   "prompt_tokens_details": {
+    "cached_tokens": 0,
+    "cache_write_tokens": 0,
+    "audio_tokens": 0,
+    "video_tokens": 0
+   },
+   "cost_details": {
+    "upstream_inference_cost": 0.0002744,
+    "upstream_inference_prompt_cost": 3.52e-05,
+    "upstream_inference_completions_cost": 0.0002392
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 0,
+    "image_tokens": 0,
+    "audio_tokens": 0
+   }
+  },
+  "cost": 0.0002744,
+  "file": "/Users/azimshaik/ox-test/eval-frontier/meta-llama__llama-4-maverick.txt"
+ }
+]

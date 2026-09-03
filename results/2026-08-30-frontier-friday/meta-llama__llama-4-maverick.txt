@@ -1,0 +1,13 @@
+CODE:
+```python
+def is_valid_isbn10(code: str) -> bool:
+    code = code.replace('-', '').upper()
+    if len(code) != 10 or not code[:-1].isdigit() or not (code[-1].isdigit() or code[-1] == 'X'):
+        return False
+    checksum = sum((10 - i) * int(x) if x.isdigit() else 10 for i, x in enumerate(code))
+    return checksum % 11 == 0
+```
+EXPLANATION:
+The checksum for an ISBN-10 code is calculated by multiplying each digit by a weight (10 for the first digit, 9 for the second, and so on down to 1 for the last digit), and then summing these products. The check digit is chosen such that this sum is divisible by 11. This scheme catches transposition errors because swapping two digits changes the weighted sum by a multiple of the difference between their weights, and since the weights are consecutive integers, this difference is never a multiple of 11 unless the digits are the same or the check digit is involved in a specific pattern that is still caught due to the divisibility rule.
+EDGE_CASE:
+One edge case that some implementations get wrong is handling ISBN-10 codes with hyphens or the check digit 'X'; this implementation correctly removes hyphens and allows 'X' as a valid check digit by converting it to its numeric equivalent (10).
