@@ -47,6 +47,7 @@ measures **49.4 tok/s** on a clean sustained decode test at the same 175 W cap.
 - `<model>.txt` — raw model replies (unedited)
 - `apps/<run>/` — `index.html` (the app), `metrics.json`, `check.json` (static checks), `verification.json` (browser tests)
 - `thinking/<run>.txt` — full reasoning transcripts (up to 83 k chars)
+- `reports/` — the four full rig reports this run is built on (health diagnostics, ternary-vs-vLLM power study, build sweep, reasoning analysis)
 - `../../articles/2026-09-19-frontier-friday-local.md` — write-up
 - `../../harness/local/` — the harness used (works against any OpenAI-compatible endpoint)
 
