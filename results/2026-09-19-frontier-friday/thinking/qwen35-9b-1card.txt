@@ -1,0 +1,89 @@
+1.  **Analyze the Request:**
+    *   **Goal:** Build a "Home Organization & Inventory" manager.
+    *   **Format:** Single HTML file (HTML + CSS + JS inline).
+    *   **Constraints:** No external libraries, no build step, offline-capable, clean code, responsive UI, keyboard accessible.
+    *   **Features:**
+        *   Room Management (CRUD).
+        *   Item Management (CRUD, fields: name, qty, category, room, notes).
+        *   Search/Filter (Live text, Room, Category).
+        *   Low-stock warning (qty <= 2).
+        *   Persistence (localStorage).
+        *   Demo Data & Export/Import (JSON).
+
+2.  **Architecture & Data Structure:**
+    *   *State:* I need a central state object to hold `rooms` (array of strings) and `items` (array of objects).
+    *   *Storage:* `localStorage` keys: `homeInventory_rooms`, `homeInventory_items`.
+    *   *UI Components:*
+        *   Header (Title, Export/Import, Demo).
+        *   Controls Bar (Add Room, Search inputs).
+        *   Room Tabs (to switch views).
+        *   Item List (Table or Grid).
+        *   Modals (Add/Edit Room, Add/Edit Item).
+
+3.  **Drafting the HTML Structure:**
+    *   `<!DOCTYPE html>`
+    *   `<head>`: Meta tags, `<style>` block.
+    *   `<body>`:
+        *   `#app-container`
+        *   `header`: Title + Actions.
+        *   `#room-selector`: Buttons for each room.
+        *   `#search-bar`: Inputs for filtering.
+        *   `#item-list`: Container for the table/grid.
+        *   `#modal-overlay`: For forms.
+        *   `#toast`: For notifications.
+
+4.  **Drafting the CSS (Style):**
+    *   *Reset:* Basic box-sizing, margins.
+    *   *Layout:* Flexbox for the header and controls. Grid for the item list.
+    *   *Responsiveness:* Media queries for mobile (stacking controls, smaller table).
+    *   *Visuals:* Clean sans-serif font (system-ui), subtle shadows, distinct colors for low stock (red/orange).
+    *   *Accessibility:* Focus rings, clear button styles.
+
+5.  **Drafting the JavaScript (Logic):**
+    *   *State Management:* `state = { rooms: [], items: [] }`.
+    *   *Initialization:* `loadData()` from localStorage, `render()`.
+    *   *Room Logic:* `addRoom()`, `deleteRoom()`, `switchRoom()`.
+    *   *Item Logic:* `addItem()`, `editItem()`, `deleteItem()`, `updateItem()`.
+    *   *Filtering:* `getFilteredItems()` based on search text, selected room, selected category.
+    *   *Persistence:* `saveData()`.
+    *   *Export/Import:* File API for reading/writing JSON.
+    *   *DOM Manipulation:* Helper functions to generate HTML strings or use `document.createElement`.
+
+6.  **Refining the Logic (Self-Correction during drafting):**
+    *   *Issue:* How to handle "Room" selection?
+    *   *Solution:* If no room is selected, show all items. If a room is selected, show only items in that room.
+    *   *Issue:* Editing items.
+    *   *Solution:* A modal is best. When "Edit" is clicked, populate the modal with current values and change the "Add" button to "Update".
+    *   *Issue:* Low stock.
+    *   *Solution:* CSS class `.low-stock` applied if `item.quantity <= 2`.
+    *   *Issue:* Categories.
+    *   *Solution:* Fixed array `['Food', 'Tools', 'Documents', 'Electronics', 'Cleaning', 'Other']`.
+
+7.  **Implementation Steps (Mental Walkthrough):**
+    *   *Step 1: HTML Skeleton.* Set up the containers.
+    *   *Step 2: CSS.* Make it look decent. Use a card-like layout.
+    *   *Step 3: JS - State & Storage.* Write the `load` and `save` functions.
+    *   *Step 4: JS - Rendering.* Write the `renderRooms()` and `renderItems()` functions.
+    *   *Step 5: JS - Interactivity.* Wire up the buttons (Add Room, Add Item, Delete, etc.).
+    *   *Step 6: JS - Filtering.* Implement the search logic.
+    *   *Step 7: JS - Import/Export.* Implement the file reader/writer.
+    *   *Step 8: Polish.* Add the "Demo Data" button and Toast notifications.
+
+8.  **Writing the Code (Iterative refinement):**
+    *   *CSS:* Ensure the table doesn't overflow horizontally on mobile. Use `overflow-x: auto` for the list container.
+    *   *JS:* Ensure `localStorage` handles empty strings gracefully.
+    *   *Validation:* Prevent adding empty items.
+
+9.  **Final Review against Requirements:**
+    *   Single file? Yes.
+    *   Offline? Yes.
+    *   Rooms CRUD? Yes.
+    *   Items CRUD? Yes.
+    *   Search/Filter? Yes.
+    *   Low stock? Yes.
+    *   Persistence? Yes.
+    *   Export/Import? Yes.
+    *   Responsive? Yes.
+    *   No console errors? (Will double-check variable names).
+
+10. **Final Code Assembly:** (This matches the provided good response).

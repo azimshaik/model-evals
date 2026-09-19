@@ -1,0 +1,51 @@
+{
+ "label": "daily-27b-vllm-tp4-nothink",
+ "model": "qwen27b-int4-fp16kv-256K-mtp3-text-only-cu128",
+ "endpoint": "http://127.0.0.1:8000",
+ "path": "/v1/chat/completions",
+ "prompt_tokens": 0,
+ "completion_tokens": 9746,
+ "reasoning_chars": 0,
+ "content_chars": 38982,
+ "ttft_s": 0.39,
+ "wall_s": 248.7,
+ "decode_tok_s": 39.25,
+ "finish_reason": "stop",
+ "raw_chars": 38982,
+ "html_chars": 38970,
+ "html_bytes": 39010,
+ "html_complete": true,
+ "gpu_total_pavg_w": 690.0,
+ "gpus": {
+  "0": {
+   "tmax": 71.0,
+   "tavg": 69.7,
+   "pmax": 179.07,
+   "pavg": 173.2,
+   "fanmax": 92.0
+  },
+  "1": {
+   "tmax": 69.0,
+   "tavg": 67.6,
+   "pmax": 179.39,
+   "pavg": 173.2,
+   "fanmax": 87.0
+  },
+  "2": {
+   "tmax": 76.0,
+   "tavg": 74.0,
+   "pmax": 177.07,
+   "pavg": 170.3,
+   "fanmax": 63.0
+  },
+  "3": {
+   "tmax": 75.0,
+   "tavg": 71.7,
+   "pmax": 180.29,
+   "pavg": 172.8,
+   "fanmax": 56.0
+  }
+ },
+ "timestamp": "2026-09-19 01:27:50",
+ "tokens_estimated": true
+}

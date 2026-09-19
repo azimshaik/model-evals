@@ -1,0 +1,53 @@
+{
+ "label": "qwen35-9b-1card",
+ "model": "~/models/sweep/qwen35-9b/Qwen3.5-9B-UD-Q4_K_XL.gguf",
+ "endpoint": "http://127.0.0.1:8090",
+ "path": "/v1/chat/completions",
+ "prompt_tokens": 0,
+ "completion_tokens": 6666,
+ "tokens_estimated": false,
+ "reasoning_chars": 4563,
+ "content_chars": 21339,
+ "ttft_s": 0.99,
+ "wall_s": 92.2,
+ "decode_tok_s": 73.1,
+ "finish_reason": "stop",
+ "raw_chars": 21339,
+ "html_chars": 21327,
+ "html_bytes": 21330,
+ "html_complete": true,
+ "gpu_total_pavg_w": 187.0,
+ "gpus": {
+  "0": {
+   "tmax": 66.0,
+   "tavg": 62.4,
+   "pmax": 176.4,
+   "pavg": 169.0,
+   "fanmax": 77.0
+  },
+  "1": {
+   "tmax": 40.0,
+   "tavg": 39.3,
+   "pmax": 12.99,
+   "pavg": 11.7,
+   "fanmax": 30.0
+  },
+  "2": {
+   "tmax": 38.0,
+   "tavg": 37.2,
+   "pmax": 3.54,
+   "pavg": 2.4,
+   "fanmax": 32.0
+  },
+  "3": {
+   "tmax": 34.0,
+   "tavg": 32.8,
+   "pmax": 13.07,
+   "pavg": 4.2,
+   "fanmax": 50.0
+  }
+ },
+ "timestamp": "2026-09-19 01:40:51",
+ "prefill_tok_s": 490,
+ "source": "llama.cpp server log timings"
+}

@@ -1,0 +1,14 @@
+{
+ "label": "qwen3-8b-1card",
+ "served_by": "llama.cpp, Qwen3-8B Q4_K_M, 1 GPU, 32K ctx, thinking disabled",
+ "loads_in_browser": true,
+ "ui_quality": "plainest of the set: no toast/stat feedback, minimal styling, red-tinted low-stock cards",
+ "functional_tests": {
+  "demo_data_button": "PASS - 3 rooms (Kitchen/Garage/Study) + demo items",
+  "add_item": "PASS - typed name/qty with real events, room selected, item appears after clicking 'Add Item'",
+  "search_filter": "PASS - searching 'widget' hid unrelated items (Bread)",
+  "persistence_after_reload": "PASS - new item survives reload (localStorage)"
+ },
+ "verdict": "works end to end; smallest and plainest file (14.2 KiB)",
+ "metrics_summary": "3631 tokens, 44 s, 83.7 tok/s, 185 W rig total"
+}

@@ -1,0 +1,52 @@
+{
+ "label": "ternary-27b-1card",
+ "model": "~/models/bonsai2/Ternary-Bonsai-2-27B-PTQ1_0.gguf",
+ "endpoint": "http://127.0.0.1:8090",
+ "path": "/v1/chat/completions",
+ "prompt_tokens": 0,
+ "completion_tokens": 9816,
+ "tokens_estimated": false,
+ "reasoning_chars": 0,
+ "content_chars": 32966,
+ "ttft_s": 1.23,
+ "wall_s": 336.3,
+ "decode_tok_s": 29.3,
+ "finish_reason": "stop",
+ "raw_chars": 32966,
+ "html_chars": 32954,
+ "html_bytes": 32980,
+ "html_complete": true,
+ "gpu_total_pavg_w": 191.0,
+ "gpus": {
+  "0": {
+   "tmax": 68.0,
+   "tavg": 67.0,
+   "pmax": 176.29,
+   "pavg": 173.0,
+   "fanmax": 86.0
+  },
+  "1": {
+   "tmax": 44.0,
+   "tavg": 40.0,
+   "pmax": 13.44,
+   "pavg": 11.7,
+   "fanmax": 44.0
+  },
+  "2": {
+   "tmax": 46.0,
+   "tavg": 39.7,
+   "pmax": 4.75,
+   "pavg": 2.4,
+   "fanmax": 38.0
+  },
+  "3": {
+   "tmax": 40.0,
+   "tavg": 34.6,
+   "pmax": 53.98,
+   "pavg": 3.8,
+   "fanmax": 50.0
+  }
+ },
+ "timestamp": "2026-09-19 01:36:06",
+ "source": "llama.cpp server log timings"
+}

@@ -1,0 +1,13 @@
+Build a complete, working single-file web application: a "Home Organization & Inventory" manager for a household.
+
+Requirements (all must work offline in the browser, no build step, no external libraries or CDNs):
+1. Rooms management: create, rename, delete rooms (e.g. Kitchen, Garage, Study).
+2. Items: add an item with name, quantity, category (choose from a fixed list: Food, Tools, Documents, Electronics, Cleaning, Other), room, and optional notes. Edit and delete items.
+3. Search: a text box that filters items live by name/notes; plus filter by room and by category.
+4. Low-stock indicator: items with quantity <= 2 are highlighted.
+5. Persistence: everything is saved in the browser via localStorage and survives a page reload. Include a "Load demo data" button that fills in a few example rooms and items.
+6. Export/Import: buttons to download the data as JSON and to load it back from a JSON file.
+7. UI: clean and usable on desktop and phone, clear headings, no horizontal scrolling, keyboard accessible forms, visible feedback when an item is saved or deleted.
+8. Code quality: one HTML file with inline <style> and <script>, no frameworks, well-named variables, sensible structure, no console errors.
+
+Output contract: reply with ONE single fenced code block containing the complete HTML file and nothing else - no explanation, no commentary before or after. Start the file with <!DOCTYPE html> and end it with </html>.

@@ -1,0 +1,15 @@
+{
+ "label": "qwen35-9b-1card",
+ "served_by": "llama.cpp (prism fork binary), Qwen3.5-9B UD-Q4_K_XL, 1 GPU, 32K ctx",
+ "loads_in_browser": true,
+ "ui_quality": "clean table layout, room tabs, stat/toast feedback, decent styling",
+ "functional_tests": {
+  "demo_data_button": "PASS - 4 rooms + 6 items with notes, low-stock quantities in red",
+  "add_item": "PASS - item row appears with qty 6, category, room; note: an extra room with the same name was also created, which suggests duplicate element IDs between the item and room forms",
+  "search_filter": "PASS - searching 'widget' hid unrelated items",
+  "persistence_after_reload": "PASS - item still present after reload"
+ },
+ "caveat": "the app uses alert() for confirmations, which blocks headless automation until the dialog is dismissed",
+ "feature_markers_all_present": true,
+ "corrected_note": "an initial 'page froze' reading was my automation being blocked by an alert dialog, not an app bug"
+}

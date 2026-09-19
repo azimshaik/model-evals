@@ -1,0 +1,1175 @@
+The user wants a complete single-file web app: a home organization & inventory manager. Requirements:
+
+1. Room management: create, rename, delete
+2. Items: add (name, quantity, category from a fixed list, room, optional notes), edit, delete
+3. Search: live text filter by name/notes; filter by room and category
+4. Low stock indicator: quantity <= 2 highlighted
+5. Persistence: localStorage, demo data button
+6. Export/import JSON
+7. UI: clean, responsive, keyboard accessible, visible feedback (toasts)
+8. Code quality: single HTML file, inline style/script, no frameworks, well-named variables, no console errors
+
+Output: a single fenced code block containing only the HTML file.
+
+Design considerations: I want this to feel crafted and polished rather than generic. Let me think about a distinctive design identity.
+
+Theme: home inventory — think of a well-organized household, a "pantry ledger" aesthetic. Ideas:
+- A "kitchen cabinet / pantry" vibe: warm paper tones, but I want to avoid the cream/beige + terracotta + serif cliché.
+- Alternative: a "filing cabinet / card catalog" aesthetic — like a household ledger. Deep green (like a vintage pantry) with warm off-white? Or a "blueprint" style?
+- Or a "label maker" aesthetic — like storage bin labels. Bold, chunky, with a label-tag motif.
+
+Let me pick a distinctive palette: deep forest/pine green (like a vintage pantry or library) with warm paper white, and a punchy accent like marigold/amber for low-stock warnings and a coral red for delete. Typography: pair a distinctive display face with a readable body face. No external fonts (offline, no CDN). So I have to use system font stacks. I can craft a distinctive display stack: e.g. "Georgia" or "Times" for display? Hmm, serif display on a green background could work — like a vintage pantry label. Or use a system sans-serif with a heavy weight and tight tracking for display, and a different body face.
+
+System font options:
+- Display: "Avenir Next", "Futura", "Segoe UI", "Helvetica Neue" — geometric sans-serif.
+- Or a serif display: "Georgia", "Times New Roman" — gives a ledger feel.
+- Monospace accent: "Courier New" for quantities/labels — very "inventory ledger" — nice touch. Use monospace for quantity badges and IDs.
+
+Let me design: "The Household Ledger" — a deep pine green header with a paper-like body. Actually, let me think about a more distinctive opening: not a generic hero. The app should open with the app itself — a masthead like a ledger cover: "The Household Ledger" with a small tagline, and immediately the inventory. The masthead can include a live stat strip (total items, rooms, low-stock count) — that's distinctive and functional.
+
+Layout:
+- Top masthead: app name (display typeface), tagline, and a live stat strip (total items, rooms, low-stock count).
+- Left column (desktop): rooms panel — list of rooms with item counts, add/rename/delete room controls.
+- Right/main column: item list with search + filters, add/edit item form (modal or inline panel), item cards/rows.
+- Mobile: stacked, rooms as a collapsible section or horizontal scroll? No horizontal scroll — so stacked, or a compact room chip row.
+
+Interactions:
+- Toast notifications for save/delete actions.
+- Low-stock rows highlighted with an amber left border + "Low stock" badge.
+- Room rename: inline edit (click the pencil, or double-click the name → input).
+- Delete with confirmation? A small confirm() is fine, or a two-step "click delete → confirm" button. Use confirm() for safety? Better: a small inline confirmation state on the delete button ("Really delete?"). Keep it simple: use confirm() dialog — it's accessible and works offline. Actually, a custom two-step is nicer but confirm() is reliable. Let me do a custom two-step: click trash → button changes to "Confirm?" → click again to delete, with a timeout reset. That's a nice micro-interaction. Hmm, but keyboard accessibility — the button remains a button, so it's fine.
+
+Actually, let me keep it robust: use confirm() for room deletion and item deletion? The requirement says "visible feedback when items are saved or deleted" — toasts cover that. Two-step delete is a nice touch. Let me implement a small helper for two-step delete on both rooms and items.
+
+- Search: live filter by name/notes (case-insensitive).
+- Filters: room select (All rooms + each room), category select (All + fixed categories).
+- Sort? Not required. Could add sort by name — optional. Keep scope tight but polished. Maybe add a sort select (Name A–Z, Quantity, Recently added). That's a nice extra but adds complexity. Let me add a simple sort — it's cheap and useful. Actually, let me include it: sort by name, quantity (asc), name. Hmm, keep it: Name, Quantity, Recently added. Fine.
+
+- Add/edit item: a form. Where? A modal dialog (native <dialog> element? Works offline in modern browsers, keyboard accessible with focus trap... native dialog has built-in focus handling and Esc. But older browsers? <dialog> is well supported now (Chrome 66+, Safari 12.1+, Firefox 62+). Safe to use. But to be safe and simple, I could also do a slide-in panel. Let me use a native <dialog> with custom styling — it's clean, accessible (Esc closes, focus stays inside), and no external libraries. Fallback: if !dialog.showModal, fall back to a fixed overlay. Hmm, that adds complexity. Alternative: a simple custom modal with a backdrop, focus management (focus first input, return focus on close, Esc handler, Tab trap). That's fully controllable and works everywhere. Let me write a small custom modal — about 40 lines. Actually, native <dialog> is less code and more accessible. Let me use <dialog> with a feature check: if (!window.Dialog.prototype.showModal) fall back to a class-based overlay. Hmm.
+
+Let me just implement a custom modal — it's deterministic. Structure:
+- <div role="dialog" aria-modal="true" aria-labelledby> with backdrop.
+- Open: save trigger, focus first field, listen for Esc, click backdrop to close, Tab trap.
+- Close: restore focus.
+
+That's solid and accessible.
+
+- Data model:
+```js
+state = {
+  rooms: [{id, name}],
+  items: [{id, name, quantity, category, roomId, notes, createdAt}]
+}
+```
+Persist to localStorage key "householdLedger.v1".
+
+- Demo data: a few rooms (Kitchen, Garage, Study, Living Room) and items spanning categories, some with low stock (quantity <= 2).
+
+- Export: Blob download of JSON, filename like household-inventory-YYYYMMDD.json.
+- Import: file input, parse, validate shape (rooms array, items array), merge or replace? Replace with validation; if invalid, toast error. Also handle items referencing missing rooms — keep them, or drop? Better: on import, if a room id isn't in the rooms list, keep the item with a roomId and auto-create a "Recovered" room? Simplest: validate that each item's roomId exists in the rooms list; if not, create a room with the name "Unsorted". Hmm, or just drop the item with a warning. Let me do this: normalize — dedupe rooms by id, keep items whose roomId exists; items with missing rooms get moved to a room named "Unsorted" (created if needed). That's robust and user-friendly. Also coerce quantity to a non-negative integer.
+
+- IDs: crypto.randomUUID() with a fallback (Date.now + random).
+
+- Keyboard accessibility: all inputs labeled, buttons focusable, visible focus styles, aria-live for toasts, form submit via Enter, Esc closes modal, Tab trap.
+
+- No horizontal scroll: use max-width, overflow-wrap, clamp() for fluid type.
+
+Visual design details:
+- Palette:
+  - Ink/paper: #F7F4EC? That's cream... I want to avoid the cream/beige + terracotta + serif cliché. Let me go a different direction: deep pine green (#1E3A2F / #143024) masthead, warm off-white paper body (#FAF8F3 is cream-ish...). Hmm.
+
+Alternative palette: "blueprint" — deep navy/ink background? Or a bright "card catalog" with a strong color: e.g. background #F2F0E9 (paper), primary deep green #1F4D3A, accent marigold #E8A33D for low stock, and a punchy red #C94F3D for delete. That's green + paper + marigold — not the terracotta cliché (marigold is more yellow-gold). Serif display? Georgia display + system sans-serif body could work and give a ledger feel. But the cream + serif cliché warning... the cliché is cream + terracotta + serif. Green + paper + gold + Georgia display is different enough.
+
+Or bolder: a dark green app? A dark "pantry at night" theme might be striking: deep green (#0F2A20) background, lighter green panels, warm paper cards? Dark mode inventory app with a monospace accent — could be very distinctive. But readability of a long item list on dark is fine. Hmm, the requirement says "clean and usable" — dark is usable. But a bright paper ledger feels more "home organization."
+
+Let me go with a bright paper ledger with a strong pine green masthead and a chunky display typeface. Display typeface: use a system stack with a heavy weight and tight tracking: "Avenir Next", "Futura", "Trebuchet MS", "Segoe UI", sans-serif — geometric. Body: "Charter", "Georgia"? Mixing serif body with sans-serif display... or body: "Segoe UI", "Helvetica Neue", Arial. Monospace: "Courier New" for quantity badges — gives that inventory-tag feel.
+
+Actually, let me reconsider: a distinctive display face from the system stack — "Palatino"/"Georgia" for the masthead title gives a "household ledger" personality, body a clean sans-serif, monospace for data. That's a three-typeface system: display serif (Georgia/Palatino), body sans-serif (system), mono (Courier New) for quantities/IDs. Distinctive and cohesive — like a vintage pantry ledger.
+
+Hmm, but the "cream + serif" cliché... my palette is pine green + paper + marigold + red, not terracotta. I think it's fine and distinctive.
+
+Let me define tokens:
+- --paper: #F6F3EA (warm paper)
+- --ink: #22302B (deep greenish ink)
+- --pine: #1E4633 (primary)
+- --pine-deep: #123024
+- --moss: #5B7A5E?
+- --gold: #E3A825 / #D99A2B (low stock + accent)
+- --red: #C2452D (delete)
+- --line: #D8D2C2
+- --card: #FFFDF7
+
+Masthead: pine green background, paper text, a subtle pattern? A subtle repeating-linear-gradient stripe or a dot pattern via CSS (no external images). Maybe a thin gold rule and a small "est." tagline. A small inline SVG icon (house) in the masthead — inline SVG is fine (not external).
+
+Masthead content:
+- Left: house glyph (inline SVG) + "The Household Ledger" title + tagline "Rooms, stock, and everything in between."
+- Right: stat chips: Items, Rooms, Low stock (live-updating). Low-stock chip pulses when > 0.
+
+Layout:
+- Header (masthead) — sticky? Maybe not sticky; keep it simple. Actually, a sticky top bar with the app name + stats could be nice. Let me make the masthead non-sticky but compact, and a sticky toolbar with search/filters? On mobile, a sticky search bar is useful. Let me do this: masthead (non-sticky), then a main grid: left sidebar (rooms + actions), right (toolbar with search + filters + sort + add button, then item list). On mobile: sidebar becomes a collapsible "Rooms" section (details/summary or a toggle button), toolbar wraps.
+
+Rooms panel:
+- Heading "Rooms" with count.
+- Add room: input + button (Enter to add).
+- List: each row: name (click to rename? or a rename button), item count badge, rename (✎) and delete (trash) buttons.
+- Rename: click ✎ → name becomes an input, Enter commits, Esc cancels.
+- Delete room: two-step confirm; items in that room — what happens? Options: delete items too (dangerous), or move to "Unsorted". Better UX: move items to a room named "Unsorted" (auto-created) and toast "5 items moved to Unsorted." That's thoughtful. Let me do that.
+
+Item list:
+- Toolbar: search input (with icon), room select, category select, sort select, "Add item" button (primary).
+- List: each item row: name (bold), category tag (colored per category), quantity in monospace with +/- steppers? Inline quantity stepper is a nice touch — click +/− to adjust quantity, auto-save. That's a great micro-interaction and useful. Low stock: gold left border + "Low stock" badge + gold quantity.
+- Per row: edit (✎) and delete (trash, two-step).
+- Empty state: friendly message with an icon; if filters are active, "No matches — clear filters" button.
+
+Category colors (tags):
+- Food: green
+- Tools: blue/steel
+- Documents: purple? Let me pick: Food #2F6B3C, Tools #3E5C76 (steel blue), Documents #6B4C9A (plum), Electronics #B05A1F? Hmm, that's terracotta-ish... use #7A3E9F? Let me assign:
+  - Food: #3A7D44 (leaf)
+  - Tools: #4A6FA5 (steel)
+  - Documents: #7B5EA7 (plum)
+  - Electronics: #B05A1F? → use #C25E1F? Still orange. Electronics: #2E6E8E (teal blue)? Tools already blue. Electronics: #8A4B2E? Let me just pick: Electronics #A34A2A (rust) — hmm. Or Electronics: #1F6F8E (teal). Cleaning: #5C8D89 (sage teal). Other: #8A8377 (taupe).
+  Final:
+  - Food: #3A7D44
+  - Tools: #4A6FA5
+  - Documents: #7B5EA7
+  - Electronics: #B05A1F → change to #C05A2E? Let me use #A8541F (burnt orange) — it's fine, it's just a tag color, not the whole palette.
+  - Cleaning: #2E7D74 (teal)
+  - Other: #8A8377 (taupe)
+  Tags: light tint background + dark text.
+
+Toasts: bottom-center, slide up, auto-dismiss after ~3s, aria-live="polite".
+
+Feedback: toast on add ("Added 'Batteries AA' to Garage"), edit ("Updated..."), delete ("Deleted..."), room actions, import/export, demo load.
+
+Quantity stepper: small +/− buttons; quantity 0 allowed? "Low stock" is <= 2, so 0 is also low. Clamp to >= 0.
+
+Sort options: Name (A–Z), Quantity (low→high), Recently added. Default: recently added (newest first).
+
+Search: match name or notes, case-insensitive, trim.
+
+Now, code structure:
+- const STORAGE_KEY = "householdLedger.v1";
+- const CATEGORIES = [...]
+- state = loadState()
+- render(): renderRooms(), renderItems(), renderStats()
+- Event delegation on the list for edit/delete/steppers.
+- Modal for item form (add/edit).
+- Toast queue.
+- Two-step delete helper.
+
+Let me write the HTML skeleton:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Household Ledger — Home Organization & Inventory</title>
+<style> ... </style>
+</head>
+<body>
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="brand">
+      <svg house icon>
+      <div>
+        <h1>The Household Ledger</h1>
+        <p class="tagline">Every room, every thing, kept in order.</p>
+      </div>
+    </div>
+    <div class="stats" aria-label="Household statistics">
+      <div class="stat"><span class="stat-number" id="statItems">0</span><span class="stat-label">Items</span></div>
+      <div class="stat"><span id="statRooms">0</span><span>Rooms</span></div>
+      <div class="stat low" id="statLowWrap"><span id="statLow">0</span><span>Low stock</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="sidebar">
+    <section class="panel rooms-panel">
+      <h2>Rooms <span class="count" id="roomCount"></span></h2>
+      <form id="roomForm" class="room-add">
+        <label class="visually-hidden" for="roomNameInput">New room name</label>
+        <input id="roomNameInput" type="text" placeholder="e.g. Basement" autocomplete="off">
+        <button type="submit">Add</button>
+      </form>
+      <ul id="roomList" class="room-list"></ul>
+    </section>
+    <section class="panel actions-panel">
+      <h2>Household tools</h2>
+      <div class="tool-row">
+        <button id="demoBtn">Load demo data</button>
+        <button id="exportBtn">Export JSON</button>
+        <button id="importBtn">Import JSON</button>
+      </div>
+      <p class="hint">Data lives in this browser's localStorage. Export before clearing it.</p>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </section>
+  </aside>
+
+  <section class="content">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg search icon>
+        <input id="searchInput" type="search" placeholder="Search items or notes…" aria-label="Search items by name or notes">
+      </div>
+      <select id="roomFilter" aria-label="Filter by room"><option value="">All rooms</option></select>
+      <select id="categoryFilter" aria-label="Filter by category"><option value="">All categories</option></select>
+      <select id="sortSelect" aria-label="Sort items">...</select>
+      <button id="addItemBtn">+ Add item</button>
+    </div>
+    <div class="list-head">
+      <span id="resultCount"></span>
+      <button id="clearFilters" hidden>Clear filters</button>
+    </div>
+    <ul id="itemList" class="item-list" role="list"></ul>
+    <div id="emptyState" class="empty" hidden>...</div>
+  </section>
+</main>
+
+<!-- Item modal -->
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h2 id="modalTitle">Add item</h2>
+      <button id="modalClose" aria-label="Close">×</button>
+    </div>
+    <form id="itemForm">
+      <div class="field">
+        <label for="itemName">Name</label>
+        <input id="itemName" type="text" required autocomplete="off">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="itemQty">Quantity</label>
+          <input id="itemQty" type="number" min="0" step="1" required>
+        </div>
+        <div class="field">
+          <label for="itemCategory">Category</label>
+          <select id="itemCategory"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="itemRoom">Room</label>
+        <select id="itemRoom"></select>
+      </div>
+      <div class="field">
+        <label for="itemNotes">Notes <span class="opt">(optional)</span></label>
+        <textarea id="itemNotes" rows="2" placeholder="Expiry, location, serial number…"></textarea>
+      </div>
+      <div class="modal-foot">
+        <button type="button" id="modalCancel">Cancel</button>
+        <button type="submit" id="modalSave" class="primary">Save item</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<script> ... </script>
+</body>
+</html>
+```
+
+Wait — the item list uses role="list" on a ul; that's fine.
+
+Now the CSS. Let me write it carefully.
+
+Font stack:
+```css
+:root {
+  --display: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: "Courier New", Courier, monospace;
+}
+```
+
+Colors:
+```css
+:root {
+  --paper: #F5F1E6;
+  --card: #FDFBF4;
+  --ink: #26332C;
+  --ink-soft: #5C6B60;
+  --pine: #1E4633;
+  --pine-deep: #143024;
+  --gold: #D99A2B;
+  --gold-soft: #F6E7C0;
+  --red: #B8432E;
+  --line: #DAD3C0;
+  --focus: #1E4633;
+}
+```
+
+Body: paper background with a subtle texture — a faint dot grid via a radial-gradient? Subtle: `background-image: radial-gradient(rgba(30,70,51,.05) 1px, transparent 1px); background-size: 22px 22px;` — a nice ledger-paper feel.
+
+Masthead: pine-deep background, paper text, gold rule. Title in display serif, size clamp(1.6rem, 4vw, 2.4rem). Tagline in italic? A small italic serif tagline is charming.
+
+Stat chips: pill-shaped, border 1px solid rgba(paper,.25), number in monospace or display, label small-caps. Low-stock chip: gold border; when > 0, add a pulse animation.
+
+Layout: `.layout { display: grid; grid-template-columns: 300px 1fr; gap: 20px; max-width: 1100px; margin: 0 auto; padding: 20px; }` Media query < 860px: single column; sidebar first (rooms panel with a collapsible list? Keep it simple: rooms panel stays, then content). Actually, on mobile, a long room list pushes items down. Make the rooms list max-height with overflow-y auto? Or a details/summary "Rooms (n)" that's collapsed by default on mobile? Simpler: keep it visible; it's fine.
+
+Hmm, better mobile: put the rooms panel in a <details> that's collapsed by default on mobile? But it also needs to be usable on desktop. I can use a details/summary element for the rooms list with a custom summary button — works everywhere, and I can force it closed on mobile via CSS (details open state can't be forced closed by CSS... actually, `details[open]` is a JS attribute; CSS can't override open). Alternative: a button that toggles a class. Let me keep it simple: always-visible sidebar, stacked on mobile. Rooms are few (3–6), so it's fine.
+
+Panels: card background, 1px border, border-radius 10px (not 24px), subtle shadow.
+
+Toolbar: search input flex:1, selects, add button. On mobile, wrap: search full-width, then a row of selects + button. Use flex-wrap with gap.
+
+Item row: grid: [name block | category tag | quantity stepper | actions]. Name block: name (15px, 600), notes (13px, soft, truncated). Category tag: small pill with tinted background. Quantity: monospace number with −/+ buttons (20px square). Actions: edit/delete icon buttons, hidden until hover on desktop (but always visible on touch — use media (hover: none) to always show). Low stock: row background gold-soft, left border 3px gold, "Low stock" badge next to quantity or in the name area.
+
+Hover: row lifts slightly (translateY(-1px), shadow). Transition.
+
+Delete two-step: button text changes to "Confirm?" with red background; timeout 2.5s to reset. Implement with a data attribute or a per-button state map. Use a Map of button → timeout.
+
+Edit: open modal pre-filled.
+
+Steppers: buttons with aria-label "Increase/decrease quantity for X". On click, update state, persist, re-render (or just update the row in place — re-render is simpler and consistent).
+
+Empty state: dashed-border box, icon (inline SVG box), message, and a "Clear filters" button if filters are active.
+
+Toasts: fixed bottom-center, column of toasts, each with a check icon, slide-up animation, auto-remove after 3200ms. aria-live polite.
+
+Focus styles: `:focus-visible { outline: 2px solid var(--pine); outline-offset: 2px; }`
+
+Modal: backdrop fixed inset 0, rgba(20,48,36,.55), slight blur? A small blur is fine. Modal: max-width 460px, margin auto, border-radius 12px, shadow, max-height 85vh, overflow auto. Animate: backdrop fade, modal scale from .97.
+
+Labels: 13px, 600, ink-soft. Inputs: 14px, 1px border, radius 8px, padding 9px 10px, background #fff. Focus: border pine + ring.
+
+Buttons:
+- .btn base: font 14px 600, padding 9px 14px, radius 8px, cursor pointer, transition.
+- .btn-primary: pine background, paper text.
+- .btn-danger: transparent, red text/border; active confirm state: red background.
+- .btn-ghost: transparent, ink text, border line.
+- Icon buttons: 30px square.
+
+Category tag colors via data attribute: `.tag[data-cat="Food"] { background: #E4F0E4; color: #2F5D33; border: 1px solid #C9E0C9; }` etc.
+
+Low-stock badge: gold.
+
+Now the JS. Let me write it carefully to avoid bugs.
+
+```js
+"use strict";
+
+const STORAGE_KEY = "householdLedger.v1";
+const CATEGORIES = ["Food", "Tools", "Documents", "electronics"...];
+```
+Wait, fixed list: Food, Tools, Documents, Electronics, Cleaning, Other.
+
+```js
+const CATEGORIES = ["Food", "Tools", "Documents", "Electronics", "Cleaning", "Other"];
+const LOW_STOCK_THRESHOLD = 2;
+const UNSORTED_ROOM = "Unsorted";
+
+let state = loadState();
+```
+
+loadState:
+```js
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { rooms: [], items: [] };
+    const parsed = JSON.parse(raw);
+    return normalizeState(parsed);
+  } catch (err) {
+    return { rooms: [], items: [] };
+  }
+}
+function normalizeState(data) {
+  const rooms = (data && Array.isArray(data.rooms) ? data.rooms : [])
+    .map(r => ({ id: String(r.id ?? cryptoSafeId()), name: String(r.name ?? "Unnamed room") }))
+    .filter(r => r.name.trim() !== "");
+  const roomIds = new Set(rooms.map(r => r.id));
+  const items = (data && Array.isArray(data.items) ? data.items : [])
+    .map(i => ({
+      id: String(i.id ?? cryptoSafeId()),
+      name: String(i.name ?? "Untitled item"),
+      quantity: Math.max(0, Math.round(Number(i.quantity) || 0)),
+      category: CATEGORIES.includes(i.category) ? i.category : "Other",
+      roomId: roomIds.has(i.roomId) ? i.roomId : null,
+      notes: String(i.notes ?? ""),
+      createdAt: Number(i.createdAt) || Date.now(),
+    }));
+  // items with null roomId go to Unsorted
+  ...
+}
+```
+
+Hmm, for import, simpler: normalizeState handles both load and import. For items with missing roomId: create an "Unsorted" room if needed. Let me do that in normalizeState:
+
+```js
+function normalizeState(data) {
+  const rooms = [];
+  const seenIds = new Set();
+  if (Array.isArray(data?.rooms)) {
+    for (const r of data.rooms) {
+      if (!r || typeof r.name !== "string" || !r.name.trim()) continue;
+      const id = r.id != null ? String(r.id) : makeId();
+      if (seenIds.has(id)) continue;
+      seenIds.add(id);
+      rooms.push({ id, name: r.name.trim() });
+    }
+  }
+  const items = [];
+  if (Array.isArray(data?.items)) {
+    for (const i of data.items) {
+      if (!i || typeof i.name !== "string" || !i.name.trim()) continue;
+      const id = i.id != null ? String(i.id) : makeId();
+      const roomId = seenIds.has(i.roomId) ? String(i.roomId) : null;
+      items.push({
+        id,
+        name: i.name.trim(),
+        quantity: Math.max(0, Math.floor(Number(i.quantity) || 0)),
+        category: CATEGORIES.includes(i.category) ? i.category : "Other",
+        roomId,
+        notes: typeof i.notes === "string" ? i.notes : "",
+        createdAt: Number.isFinite(Number(i.createdAt)) ? Number(i.createdAt) : Date.now(),
+      });
+    }
+  }
+  // Attach orphan items to Unsorted
+  if (items.some(i => i.roomId === null)) {
+    const existing = rooms.find(r => r.name === UNSORTED_ROOM);
+    const target = existing ?? { id: makeId(), name: UNSORTED_ROOM };
+    if (!existing) { rooms.push(target); seenIds.add(target.id); }
+    for (const i of items) if (i.roomId === null) i.roomId = target.id;
+  }
+  return { rooms, items };
+}
+```
+
+makeId:
+```js
+function makeId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+}
+```
+
+saveState:
+```js
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch (err) { toast("Couldn't save to this browser's storage.", { tone: "warn" }); }
+}
+```
+
+DOM refs:
+```js
+const $ = (sel) => document.querySelector(sel);
+const roomList = $("#roomList");
+const itemList = $("#itemList");
+...
+```
+
+Render rooms:
+```js
+function renderRooms() {
+  roomList.innerHTML = "";
+  state.rooms.forEach(room => {
+    const li = document.createElement("li");
+    li.className = "room-row";
+    li.dataset.roomId = room.id;
+    const count = state.items.filter(i => i.roomId === room.id).length;
+    li.innerHTML = `
+      <span class="room-name">${escapeHtml(room.name)}</span>
+      <span class="room-count">${count}</span>
+      <button class="icon-btn" data-action="rename" data-room-id="${room.id}" aria-label="Rename ${escapeHtml(room.name)}">✎</button>
+      <button class="icon-btn" data-action="delete-room" data-room-id="${room.id}" aria-label="Delete ${escapeHtml(room.name)}">🗑</button>`;
+    ...
+  });
+}
+```
+
+Icons: use inline SVG for a cleaner look than emoji. Emoji is simpler and works offline. But SVG looks more polished. Let me use small inline SVGs for pencil/trash/plus/search. Define a helper `icon(name)` that returns an SVG string. Keep them small (16px, stroke currentColor).
+
+Icons needed: house (masthead), search, pencil, trash, plus, close (×), check (toast), box (empty state), arrow? Let me write a small set:
+
+```js
+const ICONS = {
+  house: `<svg viewBox="0 0 24 24" ...><path d="M3 11l9-8 9 8"/><path d="M5 10h14v10h-4v-5h-6v5H5z"/></svg>`,
+  ...
+};
+```
+
+Simpler: stroke-based:
+- house: `<path d="M3 10.5 12 3l9 7.5"/><path d="M5 10.5V21h14V10.5"/><path d="M9 21v-6h6v6"/>`
+- search: `<circle cx="11" cy="11" r="7"/><path d="m20 20-4.3-4.3"/>`
+- pencil: `<path d="m12 20h4l1-4-9-9L8 10l9 9z"/>` hmm, standard pencil: `<path d="M18 2l3 3-1 1-1 1L7 18l-4 4 1-4 14-14z"/>` — let me use a simpler known one: pencil: `<path d="m16.5 3.5-2.1 2.1L11 10l-4.9 4.9 2.1 2.1 4.9-4.9 3.4-3.4z"/>`? That's not right.
+
+Let me use standard Feather-style icons (24px, stroke 2, round):
+- home: `M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z` + `M9 22h6`? Feather home: `<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>`
+- search: `<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>`
+- edit (feather edit-2): `<path d="M17 3.5a2.5 2.5 0 0 1 2.5 2.5v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h7.5L17 3.5z"/>`? Feather edit-2: `M17 3.5a2.5 2.5 0 0 1 2.5 2.5v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h7.5L17 3.5z` — close enough.
+- trash (feather trash-2): `<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>`
+- plus: `<path d="M12 5v14M5 12h14"/>`
+- close: `<path d="M18 6 6 18M6 6l12 12"/>`
+- check: `<polyline points="20 6 9 17 4 12"/>`
+- box (feather package): `<path d="M1 4h22v16H1z"/><path d="m1 12 4-4 10 4 10-4 4 4v12H1z"/><path d="m12 8.5 4.5 3.5-4.5 3.5-4.5-3.5z"/>`
+- arrow-down? Not needed.
+
+Wrap: `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`
+
+escapeHtml:
+```js
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+```
+
+Render items with filters:
+```js
+function getFilteredItems() {
+  const q = searchInput.value.trim().toLowerCase();
+  const roomId = roomFilter.value;
+  const category = categoryFilter.value;
+  let list = state.items.filter(i =>
+    (!roomId || i.roomId === roomId) &&
+    (!category || i.category === category) &&
+    (!q || i.name.toLowerCase().includes(q) || i.notes.toLowerCase().includes(q))
+  );
+  switch (sortSelect.value) {
+    case "name": list.sort((a,b) => a.name.localeCompare(b.name)); break;
+    case "qty": list.sort((a,b) => a.quantity - b.quantity || a.name.localeCompare(b.name)); break;
+    case "newest": list.sort((a,b) => b.createdAt - a.createdAt); break;
+  }
+  return list;
+}
+```
+
+Render item row:
+```js
+function renderItems() {
+  const list = getFilteredItems();
+  itemList.innerHTML = "";
+  const hasFilters = searchInput.value.trim() || roomFilter.value || categoryFilter.value;
+  if (list.length === 0) {
+    emptyState.hidden = false;
+    emptyState.querySelector("#emptyMsg").textContent = hasFilters ? "No items match your filters." : "No items yet. Add your first one or load the demo data.";
+    clearFiltersBtn.hidden = !hasFilters;
+  } else {
+    emptyState.hidden = true;
+    clearFiltersBtn.hidden = true;
+    for (const item of list) itemList.appendChild(createItemRow(item));
+  }
+  resultCount.textContent = `${list.length} ${list.length === 1 ? "item" : "items"} shown`;
+}
+```
+
+createItemRow:
+```js
+function createItemRow(item) {
+  const li = document.createElement("li");
+  li.className = "item-row" + (isLowStock(item) ? " low-stock" : "");
+  li.dataset.itemId = item.id;
+  const room = state.rooms.find(r => r.id === item.roomId)?.name ?? "Unsorted";
+  li.innerHTML = `
+    <div class="item-main">
+      <div class="item-name">${escapeHtml(item.name)}</div>
+      <div class="item-meta">${escapeHtml(room)} · ${escapeHtml(item.notes || "No notes")}</div>
+    </div>
+    <span class="tag" data-cat="${item.category}">${item.category}</span>
+    ${isLowStock(item) ? '<span class="low-badge">Low stock</span>' : ""}
+    <div class="qty-group" aria-label="Quantity for ${escapeHtml(item.name)}">
+      <button class="stepper" data-action="qty-minus" data-item-id="${item.id}" aria-label="Decrease quantity">−</button>
+      <span class="qty-value">${item.quantity}</span>
+      <button class="stepper" data-action="qty-plus" data-item-id="${item.id}" aria-label="Increase quantity">+</button>
+    </div>
+    <div class="row-actions">
+      <button class="icon-btn" data-action="edit" data-item-id="${item.id}" aria-label="Edit ${escapeHtml(item.name)}">pencil</button>
+      <button class="icon-btn danger" data-action="delete-item" data-item-id="${item.id}" aria-label="Delete ${escapeHtml(item.name)}">trash</button>
+    </div>`;
+  return li;
+}
+```
+
+Hmm, layout: on narrow screens, the row should wrap. Use grid with auto columns: `grid-template-columns: minmax(0, 1fr) auto auto auto;` and on mobile, stack: name+meta full width, then a row of tag/qty/actions. Let me use flex-wrap instead: `.item-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }` name block flex:1 min-width 180px; qty-group; actions. On mobile, name block width 100%, then a row of tag + low badge + qty + actions. That works with flex-wrap.
+
+Actually, cleaner:
+```css
+.item-row { display:grid; grid-template-columns: minmax(0,1fr) auto auto auto; gap:12px; align-items:center; }
+@media (max-width: 640px) {
+  .item-row { grid-template-columns: minmax(0,1fr) auto; }
+  .item-main { grid-column: 1 / -1; }
+}
+```
+That's clean.
+
+Event delegation on itemList:
+```js
+itemList.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const id = btn.dataset.itemId;
+  switch (action) {
+    case "qty-plus": changeQty(id, 1); break;
+    case "qty-minus": changeQty(id, -1); break;
+    case "edit": openItemModal(itemById(id)); break;
+    case "delete-item": requestDeleteItem(btn, id); break;
+  }
+});
+```
+
+changeQty:
+```js
+function changeQty(id, delta) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  item.quantity = Math.max(0, item.quantity + delta);
+  saveState();
+  renderAll();
+  toast(`${item.name}: quantity is now ${item.quantity}${item.quantity <= LOW_STOCK_THRESHOLD ? " — low stock" : ""}`);
+}
+```
+Toast on every stepper click might be noisy but it's "visible feedback" — good. Maybe toast only when crossing the low-stock threshold? Simpler: always toast. Fine.
+
+Two-step delete:
+```js
+const deleteTimers = new Map();
+function requestDelete(btn, id) {
+  if (btn.classList.contains("confirming")) {
+    deleteTimers.delete(btn);
+    btn.classList.remove("confirming");
+    // actually delete
+  } else {
+    btn.classList.add("confirming");
+    btn.setAttribute("aria-label", "Confirm delete");
+    const t = setTimeout(() => {
+      btn.classList.remove("confirming");
+      deleteTimers.delete(btn);
+    }, 2500);
+    deleteTimers.set(btn, t);
+  }
+}
+```
+But re-rendering clears the buttons — the timer is on the old node; fine, the timer just removes a class from a detached node, harmless.
+
+Delete item:
+```js
+function deleteItem(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  state.items = state.items.filter(i => i.id !== id);
+  saveState();
+  renderAll();
+  toast(`Deleted "${item.name}" from ${roomName(item.roomId)}.`);
+}
+```
+
+Room events:
+- roomForm submit: trim name, check duplicate (case-insensitive) → toast "Room already exists"; else push, save, render, clear input, focus input.
+- rename: find li, replace .room-name span with input; on Enter/blur commit (trim, duplicate check), Esc cancels.
+- delete-room: two-step; on confirm: move items to Unsorted, delete room, toast.
+
+```js
+function deleteRoom(id) {
+  const room = state.rooms.find(r => r.id === id);
+  const moved = state.items.filter(i => i.roomId === id).length;
+  const target = state.rooms.find(r => r.name === UNSORTED_ROOM) ?? { id: makeId(), name: UNSORTED_ROOM };
+  if (!state.rooms.some(r => r.id === target.id)) state.rooms.push(target);
+  for (const i of state.items) if (i.roomId === id) i.roomId = target.id;
+  state.rooms = state.rooms.filter(r => r.id !== id);
+  saveState();
+  renderAll();
+  toast(`Deleted "${room.name}"; ${moved} item${moved===1?"":"s"} moved to ${target.name}.`);
+}
+```
+Edge case: deleting the only room → Unsorted is created. Good.
+
+Demo data:
+```js
+const DEMO = {
+  rooms: [
+    { id: makeId(), name: "Kitchen" },
+    { id: makeId(), name: "Garage" },
+    { id: makeId(), name: "Study" },
+    { id: makeId(), name: "Living Room" },
+  ],
+  items: [ ... ]
+};
+```
+Items with varied categories, some low stock (qty 0–2), notes. Let me write ~10 items:
+
+Kitchen:
+- Olive oil, Food, 2, "Extra virgin — check the date"
+- Coffee filters, Food? hmm, Coffee filters → Other or Cleaning? Let me say "Other". qty 14.
+- Baking soda, Food, 1, "Behind the flour"
+- Dish soap, Cleaning, 3
+- Paper towels, Other, 6
+Garage:
+- AA batteries, Electronics, 2, "9V also in the toolbox"
+- Work gloves, Tools, 4
+- Extension cord, Electronics, 1, "10 m, tested last spring"
+- Paint brushes, Tools, 5
+Study:
+- Printer ink, Other, 1, "Black cartridge — order soon"
+- Stapler, Tools, 1
+- Cables (USB-C), Electronics, 7
+Living Room:
+- Remote batteries, Electronics, 0, "TV and soundbar"
+- Dust cloths, Cleaning, 3
+- Board games, Other, 4
+
+That's 14 items, good spread, low stock: olive oil (2), baking soda (1), AA batteries (2), extension cord (1), printer ink (1), stapler (1), remote batteries (0).
+
+Demo button: confirm? "Load demo data" — if there's existing data, confirm overwrite? Requirement: "a 'Load demo data' button that fills in a few sample rooms and items." Overwrite with a confirm() if state is non-empty, else just load. Use confirm() — native, accessible, offline. Message: "This replaces your current data with the demo. Continue?"
+
+Export:
+```js
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "household-inventory-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + ".json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast("Exported " + state.items.length + " items as JSON.");
+}
+```
+
+Import:
+```js
+importFile.addEventListener("change", () => {
+  const file = importFile.files[0];
+  importFile.value = "";
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const next = normalizeState(parsed);
+      if (!next.rooms.length && !next.items.length) throw new Error("empty");
+      state = next;
+      saveState();
+      renderAll();
+      toast(`Imported ${next.items.length} items into ${next.rooms.length} rooms.`);
+    } catch {
+      toast("That file doesn't look like a valid inventory export.", { tone: "warn" });
+    }
+  };
+  reader.onerror = () => toast("Couldn't read that file.", { tone: "warn" });
+  reader.readAsText(file);
+});
+```
+
+Modal:
+```js
+let modalTrigger = null;
+function openItemModal(item = null) {
+  modalTitle.textContent = item ? "Edit item" : "Add item";
+  itemForm.reset();
+  itemName.value = item?.name ?? "";
+  itemQty.value = item?.quantity ?? 1;
+  itemCategory.value = item?.category ?? CATEGORIES[0];
+  // room select
+  const roomOptions = state.rooms.map(r => ({ value: r.id, label: r.name }));
+  if (!roomOptions.length) roomOptions.push({ value: "", label: "No room yet — add one first" });
+  itemRoom.innerHTML = roomOptions.map(o => `<option value="${o.value}">${escapeHtml(o.label)}</option>`).join("");
+  itemRoom.value = item?.roomId ?? (roomOptions[0].value === "" ? "" : state.rooms[0].id);
+  itemNotes.value = item?.notes ?? "";
+  backdrop.hidden = false;
+  backdrop.classList.add("open");
+  itemName.focus();
+  modalTrigger = document.activeElement... 
+}
+```
+
+Hmm, modalTrigger should be the button that opened it. Pass the trigger element: `openItemModal(item, trigger)`. Save `modalTrigger = trigger`.
+
+Close:
+```js
+function closeItemModal() {
+  backdrop.classList.remove("open");
+  backdrop.hidden = true;
+  modalTrigger?.focus();
+}
+```
+Use a class for animation + hidden attribute. Note: setting hidden=true immediately kills the close animation; acceptable, or use a timeout. Let me do: remove .open, after 180ms set hidden. Simple:
+```js
+function closeItemModal() {
+  backdrop.classList.remove("open");
+  setTimeout(() => { backdrop.hidden = true; }, 200);
+  modalTrigger?.focus();
+}
+```
+Focus on a hidden element is fine.
+
+Esc key:
+```js
+backdrop.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeItemModal();
+  if (e.key === "Tab") { /* trap */ }
+});
+```
+Tab trap:
+```js
+if (e.key === "Tab") {
+  const focusables = backdrop.querySelectorAll("input, select, textarea, button");
+  const first = focusables[0], last = focusables[focusables.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+```
+
+Backdrop click:
+```js
+backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeItemModal(); });
+```
+
+Form submit:
+```js
+itemForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = itemName.value.trim();
+  const qty = Math.max(0, Math.floor(Number(itemQty.value) || 0));
+  if (!name) { itemName.reportValidity(); return; }
+  const category = itemCategory.value;
+  const roomId = itemRoom.value;
+  if (itemForm.dataset.editing === "1" && !roomId) { toast("Pick a room before saving."); return; }
+  if (!roomId) { toast("Add a room first, then add items.", { tone: "warn" }); return; }
+  if (itemForm.dataset.editing === "1") {
+    const item = state.items.find(i => i.id === itemForm.dataset.editing);
+    item.name = name; item.quantity = qty; item.category = category; item.roomId = roomId; item.notes = itemNotes.value.trim();
+    toast(`Updated "${name}".`);
+  } else {
+    state.items.push({ id: makeId(), name, quantity: qty, category, roomId, notes: itemNotes.value.trim(), createdAt: Date.now() });
+    toast(`Added "${name}" to ${roomById(roomId)?.name ?? "Unsorted"}.`);
+  }
+  saveState();
+  renderAll();
+  closeItemModal();
+});
+```
+
+Wait — editing: set dataset.editing = item.id. On open: `itemForm.dataset.editing = item ? item.id : ""`.
+
+renderAll:
+```js
+function renderAll() {
+  renderRooms();
+  renderItems();
+  renderStats();
+  // sync filters with existing rooms
+  syncFilterOptions();
+}
+```
+syncFilterOptions: rebuild roomFilter options (keep current value if still valid), categoryFilter options (static), sort options (static). Call on init and after room changes.
+
+```js
+function syncFilterOptions() {
+  const currentRoom = roomFilter.value;
+  roomFilter.innerHTML = `<option value="">All rooms</option>` + state.rooms.map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join("");
+  if (state.rooms.some(r => r.id === currentRoom)) roomFilter.value = currentRoom;
+}
+```
+
+Stats:
+```js
+function renderStats() {
+  statItems.textContent = state.items.length;
+  statRooms.textContent = state.rooms.length;
+  const low = state.items.filter(isLowStock).length;
+  statLow.textContent = low;
+  statLowWrap.classList.toggle("active", low > 0);
+}
+```
+
+Toast:
+```js
+function toast(message, { tone = "ok" } = {}) {
+  const el = document.createElement("div");
+  el.className = "toast " + tone;
+  el.innerHTML = `<span class="toast-icon">${ICONS.check}</span><span>${escapeHtml(message)}</span>`;
+  toastsEl.appendChild(el);
+  el.addEventListener("animationend", () => el.remove(), { once: true });
+  setTimeout(() => { if (el.isConnected) el.remove(); }, 3500);
+}
+```
+CSS: `.toast { animation: toastIn .25s ease-out; }` and a fade-out animation? Simpler: toastIn on enter; on remove, just remove (or add a .leaving class with a fade). Let me do: on schedule, add "leaving" class with a fade-out animation, then remove on animationend.
+
+```js
+function toast(message, tone = "ok") {
+  const el = document.createElement("div");
+  el.className = "toast toast-" + tone;
+  ...
+  toastsEl.appendChild(el);
+  const timer = setTimeout(() => {
+    el.classList.add("leaving");
+    el.addEventListener("animationend", () => el.remove(), { once: true });
+  }, 3000);
+}
+```
+
+CSS:
+```css
+.toasts { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 50; pointer-events: none; }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: var(--pine-deep); color: var(--paper); padding: 10px 14px; border-radius: 9px; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.25); animation: toastIn .28s cubic-bezier(.2,.9,.3,1.2); }
+.toast.ok .toast-icon { color: #9FD18A; }
+.toast.warn .toast-icon { color: var(--gold); }
+.toast.warn { background: #4A3A12; }
+.toast.leaving { animation: toastOut .25s ease-in forwards; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+@keyframes toastOut { to { opacity: 0; transform: translateY(8px); } }
+```
+
+Toast container translateX + child transform conflict: child transform is fine (separate element).
+
+Reduced motion:
+```css
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+```
+
+Now the room list rendering with rename. Let me write it:
+
+```js
+function renderRooms() {
+  roomList.innerHTML = "";
+  if (!state.rooms.length) {
+    const li = document.createElement("li");
+    li.className = "room-empty";
+    li.textContent = "No rooms yet — add one above.";
+    roomList.appendChild(li);
+  }
+  for (const room of state.rooms) {
+    const count = state.items.filter(i => i.roomId === room.id).length;
+    const li = document.createElement("li");
+    li.className = "room-row";
+    li.dataset.roomId = room.id;
+    li.append(
+      makeRoomNameNode(room),
+      makeCountBadge(count),
+      makeIconButton("edit", "Rename " + room.name, { action: "rename", roomId: room.id }),
+      makeIconButton("trash", "Delete " + room.name, { action: "delete-room", roomId: room.id, danger: true })
+    );
+    roomList.appendChild(li);
+  }
+}
+```
+
+makeRoomNameNode: span.room-name with textContent.
+
+Rename flow:
+```js
+function startRename(btn) {
+  const li = btn.closest("li");
+  const nameEl = li.querySelector(".room-name");
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = nameEl.textContent;
+  input.className = "rename-input";
+  input.setAttribute("aria-label", "Rename room");
+  nameEl.replaceWith(input);
+  input.focus();
+  input.select();
+  const commit = (cancel) => {
+    const value = input.value.trim();
+    input.remove();
+    if (cancel) { renderRooms(); return; }
+    if (!value) { toast("Room name can't be empty.", { tone: "warn" }); renderRooms(); return; }
+    const duplicate = state.rooms.some(r => r.id !== li.dataset.roomId && r.name.toLowerCase() === value.toLowerCase());
+    if (duplicate) { toast("A room with that name already exists.", { tone: "warn" }); renderRooms(); return; }
+    const room = state.rooms.find(r => r.id === li.dataset.roomId);
+    room.name = value;
+    saveState();
+    renderAll();
+    toast(`Renamed room to "${value}".`);
+  };
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") commit(false);
+    else if (e.key === "Escape") commit(true);
+  });
+  input.addEventListener("blur", () => { if (input.isConnected) commit(false); });
+}
+```
+Note: Enter triggers commit(false), which removes the input → blur fires but isConnected is false → skipped. Good.
+
+Room list click delegation:
+```js
+roomList.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+  const id = btn.dataset.roomId;
+  if (btn.dataset.action === "rename") startRename(btn);
+  else if (btn.dataset.action === "delete-room") requestDelete(btn, () => deleteRoom(id));
+});
+```
+
+requestDelete generic:
+```js
+function requestDelete(btn, onConfirm) {
+  if (btn.classList.contains("confirming")) {
+    onConfirm();
+    return;
+  }
+  btn.classList.add("confirming");
+  const label = btn.getAttribute("aria-label");
+  btn.setAttribute("aria-label", "Confirm: " + label);
+  const timer = setTimeout(() => {
+    btn.classList.remove("confirming");
+    btn.setAttribute("aria-label", label);
+  }, 2500);
+  btn.dataset.timer = timer;
+}
+```
+On confirm, clear the timer:
+```js
+function requestDelete(btn, onConfirm) {
+  if (btn.classList.contains("confirming")) {
+    clearTimeout(Number(btn.dataset.timer));
+    onConfirm();
+    return;
+  }
+  ...
+}
+```
+
+Two-step CSS: `.icon-btn.confirming { background: var(--red); color: #fff; }` and `.icon-btn.danger { color: var(--red); }` `.icon-btn.danger:hover { background: rgba(184,67,46,.12); }`.
+
+Room add form:
+```js
+roomForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = roomNameInput.value.trim();
+  if (!name) { roomNameInput.focus(); return; }
+  if (state.rooms.some(r => r.name.toLowerCase() === name.toLowerCase())) {
+    toast("A room named \"" + name + "\" already exists.", { tone: "warn" });
+    return;
+  }
+  state.rooms.push({ id: makeId(), name });
+  saveState();
+  renderAll();
+  roomNameInput.value = "";
+  roomNameInput.focus();
+  toast("Added room \"" + name + "\".");
+});
+```
+
+Sort options:
+```html
+<select id="sortSelect" aria-label="Sort items">
+  <option value="newest">Recently added</option>
+  <option value="name">Name A–Z</option>
+  <option value="qty">Quantity (low → high)</option>
+</select>
+```
+
+Category select options built from CATEGORIES.
+
+Clear filters button:
+```js
+clearFiltersBtn.addEventListener("click", () => {
+  searchInput.value = "";
+  roomFilter.value = "";
+  categoryFilter.value = "";
+  renderItems();
+  searchInput.focus();
+});
+```
+
+Live search:
+```js
+searchInput.addEventListener("input", renderItems);
+roomFilter/categoryFilter/sortSelect addEventListener("change", renderItems);
+```
+
+Init:
+```js
+function init() {
+  syncFilterOptions();
+  renderAll();
+  // wire up everything...
+}
+document.addEventListener("DOMContentLoaded", init);
+```
+Script is at the end of body, so elements exist; just call init() directly.
+
+Also, the "Add item" button when there are no rooms: allow opening the modal; the form blocks save with a toast. Or auto-create? Keep the toast.
+
+Also, the empty state icon: package SVG.
+
+Now, the masthead stats — "Low stock" chip active: gold background, pulse animation on the number.
+
+```css
+.stat { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 14px; border: 1px solid rgba(246,241,230,.25); border-radius: 999px; }
+.stat-number { font-family: var(--mono); font-size: 1.15rem; font-weight: 700; }
+.stat-label { font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; opacity: .75; }
+.stat.low.active { border-color: var(--gold); background: rgba(217,154,43,.18); }
+.stat.low.active .stat-number { color: #F3C96B; animation: pulse 1.6s infinite; }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+```
+
+Masthead pattern: subtle diagonal lines? `background: linear-gradient(160deg, #143024, #1E4633 60%, #23523A);` plus a repeating-linear-gradient overlay of thin lines at low alpha. Let me do:
+```css
+.masthead {
+  background:
+    repeating-linear-gradient(115deg, rgba(246,241,230,.03) 0 2px, transparent 2px 14px),
+    linear-gradient(160deg, #122b1f, #1e4633 55%, #24513b);
+  color: var(--paper);
+  border-bottom: 3px solid var(--gold);
+}
+```
+A gold rule under the masthead — nice ledger feel.
+
+Brand icon: house SVG 40px, gold stroke, inside a rounded square with a border.
+
+Title: `font-family: var(--display); font-size: clamp(1.5rem, 3.5vw, 2.2rem); letter-spacing: .01em;` Tagline italic serif, opacity .8.
+
+Layout padding: `padding: clamp(14px, 3vw, 28px);`
+
+Panels:
+```css
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(30,70,51,.06); }
+.panel h2 { font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 12px; display:flex; justify-content:space-between; }
+```
+Hmm, h2 uppercase small — good for section labels.
+
+Room row:
+```css
+.room-row { display:flex; align-items:center; gap:8px; padding:8px 6px; border-radius:8px; }
+.room-row:hover { background: rgba(30,70,51,.05); }
+.room-name { flex:1; font-weight:600; font-size:.95rem; overflow-wrap: anywhere; }
+.room-count { font-family: var(--mono); font-size:.75rem; background: rgba(30,70,51,.08); padding:2px 7px; border-radius:999px; color: var(--ink-soft); }
+```
+
+Room add form: input + button flex.
+
+Toolbar:
+```css
+.toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px; }
+.search-wrap { flex: 1 1 220px; position: relative; }
+.search-wrap input { width:100%; padding-left: 38px; }
+.search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); color: var(--ink-soft); pointer-events:none; }
+select { padding: 9px 34px 9px 10px; appearance:none; background-image: chevron; border-radius:8px; border:1px solid var(--line); font: inherit; }
+```
+Chevron via SVG data URI: `background-image: url("data:image/svg+xml,...")` — inline data URI is fine (not external). Or a pseudo-element. Data URI is simpler:
+`url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235C6B60' stroke-width='2'><path d='m6 9 6 6 6-6'/></svg>")` — need to URL-encode properly. Use %23 for #. Single quotes inside double-quoted url. Should be fine.
+
+Add button: `.btn-primary { background: var(--pine); color: var(--paper); }` flex: 0 0 auto.
+
+Item list:
+```css
+.item-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+.item-row { display:grid; grid-template-columns: minmax(0,1fr) auto auto auto; gap:12px; align-items:center; background: var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; transition: transform .15s ease, box-shadow .15s ease; }
+.item-row:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(30,70,51,.10); border-color: #cfc7b4; }
+.item-row.low-stock { border-left: 4px solid var(--gold); background: #FBF3DF; }
+```
+
+item-name: font-size .98rem; font-weight 700. item-meta: .8rem; color ink-soft; overflow-wrap: anywhere.
+
+Tag:
+```css
+.tag { font-size:.72rem; font-weight:700; letter-spacing:.04em; padding:3px 9px; border-radius:999px; border:1px solid; white-space:nowrap; }
+.tag[data-cat="Food"] { background:#E7F1E5; color:#2F5D33; border-color:#C4DCC0; }
+.tag[data-cat="Tools"] { background:#E3EBF4; color:#33527A; border-color:#B9CBE0; }
+.tag[data-cat="Documents"] { background:#EDE7F4; color:#5C4A85; border-color:#CFC4E4; }
+.tag[data-cat="Electronics"] { background:#F4E7DC; color:#8A4A

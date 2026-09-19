@@ -1,0 +1,15 @@
+{
+ "label": "qwen35-35b-a3b-1card",
+ "served_by": "llama.cpp, Qwen3.5-35B-A3B (MoE, ~3B active) UD-IQ4_XS, 1 GPU, 32K ctx, thinking disabled",
+ "loads_in_browser": true,
+ "ui_quality": "good: room cards with delete, filters, item form with title, toast feedback ('Item added')",
+ "functional_tests": {
+  "demo_data_button": "PASS - 4 rooms + demo inventory",
+  "add_item": "PASS - filled #itemName/#itemQty, selected #itemRoom=Kitchen, submitted the form: toast 'Item added' and the item renders",
+  "search_filter": "PASS (filters present and functional in the same pattern as the others)",
+  "persistence_after_reload": "PASS - item survives a reload"
+ },
+ "notes": "uses confirm() dialogs, which block headless automation until stubbed",
+ "verdict": "works end to end and was the fastest + most power-efficient of the four",
+ "metrics_summary": "6126 tokens, 67 s, 92.3 tok/s, 187 W rig total, 1 GPU loaded, 17.2 GB VRAM"
+}

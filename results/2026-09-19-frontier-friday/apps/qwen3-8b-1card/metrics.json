@@ -1,0 +1,53 @@
+{
+ "label": "qwen3-8b-1card",
+ "model": "~/models/sweep/qwen3-8b/Qwen3-8B-Q4_K_M.gguf",
+ "endpoint": "http://127.0.0.1:8090",
+ "path": "/v1/chat/completions",
+ "prompt_tokens": 0,
+ "completion_tokens": 3552,
+ "tokens_estimated": false,
+ "reasoning_chars": 0,
+ "content_chars": 14523,
+ "ttft_s": 0.59,
+ "wall_s": 44.0,
+ "decode_tok_s": 81.84,
+ "finish_reason": "stop",
+ "raw_chars": 14523,
+ "html_chars": 14511,
+ "html_bytes": 14511,
+ "html_complete": true,
+ "gpu_total_pavg_w": 185.0,
+ "gpus": {
+  "0": {
+   "tmax": 64.0,
+   "tavg": 58.9,
+   "pmax": 174.71,
+   "pavg": 165.6,
+   "fanmax": 70.0
+  },
+  "1": {
+   "tmax": 41.0,
+   "tavg": 40.2,
+   "pmax": 13.52,
+   "pavg": 12.5,
+   "fanmax": 30.0
+  },
+  "2": {
+   "tmax": 38.0,
+   "tavg": 37.8,
+   "pmax": 4.06,
+   "pavg": 2.7,
+   "fanmax": 32.0
+  },
+  "3": {
+   "tmax": 34.0,
+   "tavg": 33.0,
+   "pmax": 5.89,
+   "pavg": 4.4,
+   "fanmax": 50.0
+  }
+ },
+ "timestamp": "2026-09-19 01:45:23",
+ "prefill_tok_s": 965,
+ "source": "llama.cpp server log timings"
+}

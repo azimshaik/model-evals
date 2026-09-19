@@ -1,0 +1,16 @@
+{
+ "label": "ternary-27b-1card",
+ "served_by": "llama.cpp-prism fork, packed ternary PTQ1_0, 1 GPU (GPU0), 32K ctx, thinking n/a",
+ "loads_in_browser": true,
+ "ui_quality": "plainer than the daily model: emoji buttons, table-style form, no stat cards row",
+ "functional_tests": {
+  "demo_data_button": "PASS - 3 rooms / 7 items render",
+  "add_item": "FAIL - re-tested with real typed input events after dismissing dialogs: name and quantity typed into #itemName/#itemQty, room selected from #itemRoom, clicked 'Save item'. Result: form values wiped (name '', qty back to 1, room ''), item count unchanged at 7, nothing persisted after reload. The app contains no alert() calls, so this is a genuine defect in the save/re-render path, not a dialog artefact.",
+  "search_filter": "not reached (save path is broken)",
+  "persistence_after_reload": "FAIL for new items (demo data does persist)"
+ },
+ "feature_markers_all_present": true,
+ "verdict": "renders and looks complete; demo data loads; adding an item does not work - the in-progress form is cleared and nothing is saved",
+ "metrics_summary": "8242 tokens, 336 s, 24.6 tok/s, 191 W rig total, 1 GPU loaded",
+ "evidence": "index.html lines ~883-901 contain saveItem() with validation and toasts; form values are empty at save time, i.e. the form is re-created before the handler reads it"
+}

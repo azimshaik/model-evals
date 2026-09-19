@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Home Organization & Inventory</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+    header {
+      background: #333;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    main {
+      padding: 1rem;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 {
+      margin-bottom: 1rem;
+    }
+    .room-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .room {
+      background: white;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      flex: 1 1 200px;
+    }
+    .room h2 {
+      margin: 0 0 0.5rem 0;
+    }
+    .room .actions {
+      text-align: right;
+    }
+    .room .actions button {
+      margin-left: 0.5rem;
+      padding: 0.3rem 0.6rem;
+      border: none;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .room .actions button:hover {
+      background: #0056b3;
+    }
+    .item-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .item-form input, .item-form select, .item-form textarea {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+    .item-form button {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: #28a745;
+      color: white;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .item-form button:hover {
+      background: #218838;
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .filters input, .filters select {
+      padding: 0.3rem;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+    .item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .item {
+      background: white;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .item .info {
+      display: flex;
+      flex-direction: column;
+    }
+    .item .info span {
+      margin: 0.2rem 0;
+    }
+    .item .info .category {
+      font-size: 0.9rem;
+      color: #666;
+    }
+    .item .actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .item .actions button {
+      padding: 0.3rem 0.6rem;
+      border: none;
+      background: #dc3545;
+      color: white;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .item .actions button:hover {
+      background: #a71a2a;
+    }
+    .low-stock {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+    }
+    .export-import {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .export-import button {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: #6c757d;
+      color: white;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .export-import button:hover {
+      background: #5a6268;
+    }
+    .demo-btn {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      background: #28a745;
+      color: white;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    .demo-btn:hover {
+      background: #218838;
+    }
+    @media (max-width: 600px) {
+      .room {
+        flex: 1 1 100%;
+      }
+      .item-form {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Home Organization & Inventory</h1>
+  </header>
+  <main>
+    <div class="room-list" id="roomList"></div>
+    <div class="item-form" id="itemForm">
+      <input type="text" id="itemName" placeholder="Item name" required>
+      <select id="itemCategory">
+        <option value="Food">Food</option>
+        <option value="Tools">Tools</option>
+        <option value="Documents">Documents</option>
+        <option value="Electronics">Electronics</option>
+        <option value="Cleaning">Cleaning</option>
+        <option value="Other">Other</option>
+      </select>
+      <input type="number" id="itemQuantity" placeholder="Quantity" min="0" required>
+      <select id="itemRoom">
+        <option value="">Select room</option>
+      </select>
+      <textarea id="itemNotes" placeholder="Notes (optional)"></textarea>
+      <button onclick="addItem()">Add Item</button>
+    </div>
+    <div class="filters">
+      <input type="text" id="searchInput" placeholder="Search by name or notes">
+      <select id="filterRoom">
+        <option value="">All rooms</option>
+      </select>
+      <select id="filterCategory">
+        <option value="">All categories</option>
+        <option value="Food">Food</option>
+        <option value="Tools">Tools</option>
+        <option value="Documents">Documents</option>
+        <option value="Electronics">Electronics</option>
+        <option value="Cleaning">Cleaning</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="item-list" id="itemList"></div>
+    <div class="export-import">
+      <button onclick="exportData()">Export as JSON</button>
+      <input type="file" id="importFile" accept=".json" onchange="importData(event)">
+    </div>
+    <button class="demo-btn" onclick="loadDemoData()">Load Demo Data</button>
+  </main>
+  <script>
+    const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
+    const items = JSON.parse(localStorage.getItem('items') || '[]');
+
+    function saveData() {
+      localStorage.setItem('rooms', JSON.stringify(rooms));
+      localStorage.setItem('items', JSON.stringify(items));
+    }
+
+    function renderRooms() {
+      const roomList = document.getElementById('roomList');
+      roomList.innerHTML = '';
+      rooms.forEach((room, index) => {
+        const div = document.createElement('div');
+        div.className = 'room';
+        div.innerHTML = `
+          <h2>${room.name}</h2>
+          <div class="actions">
+            <button onclick="renameRoom(${index})">Rename</button>
+            <button onclick="deleteRoom(${index})">Delete</button>
+          </div>
+        `;
+        roomList.appendChild(div);
+      });
+    }
+
+    function renderItems() {
+      const itemList = document.getElementById('itemList');
+      itemList.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        if (item.quantity <= 2) div.classList.add('low-stock');
+        div.innerHTML = `
+          <div class="info">
+            <span>${item.name}</span>
+            <span>Qty: ${item.quantity}</span>
+            <span class="category">(${item.category})</span>
+            ${item.notes ? `<span>${item.notes}</span>` : ''}
+          </div>
+          <div class="actions">
+            <button onclick="editItem(${item.id})">Edit</button>
+            <button onclick="deleteItem(${item.id})">Delete</button>
+          </div>
+        `;
+        itemList.appendChild(div);
+      });
+    }
+
+    function renderRoomOptions() {
+      const roomSelect = document.getElementById('itemRoom');
+      roomSelect.innerHTML = '<option value="">Select room</option>';
+      rooms.forEach(room => {
+        const option = document.createElement('option');
+        option.value = room.name;
+        option.textContent = room.name;
+        roomSelect.appendChild(option);
+      });
+    }
+
+    function renderFilterRoomOptions() {
+      const filterRoom = document.getElementById('filterRoom');
+      filterRoom.innerHTML = '<option value="">All rooms</option>';
+      rooms.forEach(room => {
+        const option = document.createElement('option');
+        option.value = room.name;
+        option.textContent = room.name;
+        filterRoom.appendChild(option);
+      });
+    }
+
+    function addRoom() {
+      const name = prompt("Enter room name:");
+      if (name) {
+        rooms.push({ name });
+        saveData();
+        renderRooms();
+        renderRoomOptions();
+        renderFilterRoomOptions();
+      }
+    }
+
+    function renameRoom(index) {
+      const newName = prompt("Rename room:", rooms[index].name);
+      if (newName) {
+        rooms[index].name = newName;
+        saveData();
+        renderRooms();
+        renderRoomOptions();
+        renderFilterRoomOptions();
+      }
+    }
+
+    function deleteRoom(index) {
+      if (confirm("Delete room and all items?")) {
+        rooms.splice(index, 1);
+        items = items.filter(item => !item.room || item.room !== rooms[index].name);
+        saveData();
+        renderRooms();
+        renderRoomOptions();
+        renderFilterRoomOptions();
+        renderItems();
+      }
+    }
+
+    function addItem() {
+      const name = document.getElementById('itemName').value.trim();
+      const category = document.getElementById('itemCategory').value;
+      const quantity = parseInt(document.getElementById('itemQuantity').value);
+      const room = document.getElementById('itemRoom').value;
+      const notes = document.getElementById('itemNotes').value.trim();
+
+      if (!name || !category || isNaN(quantity) || quantity < 0) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+
+      const newItem = {
+        id: Date.now(),
+        name,
+        category,
+        quantity,
+        room,
+        notes
+      };
+
+      items.push(newItem);
+      saveData();
+      renderItems();
+      document.getElementById('itemForm').reset();
+      alert("Item added successfully!");
+    }
+
+    function editItem(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+
+      const name = prompt("Edit name:", item.name);
+      const category = prompt("Edit category:", item.category);
+      const quantity = parseInt(prompt("Edit quantity:", item.quantity));
+      const room = prompt("Edit room:", item.room);
+      const notes = prompt("Edit notes:", item.notes);
+
+      if (name && category && !isNaN(quantity) && quantity >= 0) {
+        item.name = name;
+        item.category = category;
+        item.quantity = quantity;
+        item.room = room;
+        item.notes = notes;
+        saveData();
+        renderItems();
+        alert("Item updated successfully!");
+      }
+    }
+
+    function deleteItem(id) {
+      if (confirm("Delete item?")) {
+        items = items.filter(item => item.id !== id);
+        saveData();
+        renderItems();
+        alert("Item deleted successfully!");
+      }
+    }
+
+    function filterItems() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const room = document.getElementById('filterRoom').value;
+      const category = document.getElementById('filterCategory').value;
+
+      const filtered = items.filter(item => {
+        const matchesSearch = item.name.toLowerCase().includes(search) || item.notes.toLowerCase().includes(search);
+        const matchesRoom = room === '' || item.room === room;
+        const matchesCategory = category === '' || item.category === category;
+        return matchesSearch && matchesRoom && matchesCategory;
+      });
+
+      renderItems(filtered);
+    }
+
+    function renderItems(filtered = items) {
+      const itemList = document.getElementById('itemList');
+      itemList.innerHTML = '';
+      filtered.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        if (item.quantity <= 2) div.classList.add('low-stock');
+        div.innerHTML = `
+          <div class="info">
+            <span>${item.name}</span>
+            <span>Qty: ${item.quantity}</span>
+            <span class="category">(${item.category})</span>
+            ${item.notes ? `<span>${item.notes}</span>` : ''}
+          </div>
+          <div class="actions">
+            <button onclick="editItem(${item.id})">Edit</button>
+            <button onclick="deleteItem(${item.id})">Delete</button>
+          </div>
+        `;
+        itemList.appendChild(div);
+      });
+    }
+
+    function exportData() {
+      const data = { rooms, items };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'inventory.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          rooms.length = 0;
+          items.length = 0;
+          rooms.push(...data.rooms);
+          items.push(...data.items);
+          saveData();
+          renderRooms();
+          renderRoomOptions();
+          renderFilterRoomOptions();
+          renderItems();
+          alert("Data imported successfully!");
+        } catch (err) {
+          alert("Invalid JSON file.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function loadDemoData() {
+      const demoRooms = [
+        { name: "Kitchen" },
+        { name: "Garage" },
+        { name: "Study" }
+      ];
+      const demoItems = [
+        { id: 1, name: "Bread", category: "Food", quantity: 1, room: "Kitchen", notes: "Whole wheat" },
+        { id: 2, name: "Screwdriver", category: "Tools", quantity: 3, room: "Garage", notes: "Phillips head" },
+        { id: 3, name: "Invoice", category: "Documents", quantity: 1, room: "Study", notes: "2023-04-05" },
+        { id: 4, name: "Laptop", category: "Electronics", quantity: 1, room: "Study", notes: "MacBook Pro" },
+        { id: 5, name: "Broom", category: "Cleaning", quantity: 2, room: "Garage", notes: "Bamboo handle" },
+        { id: 6, name: "Notebook", category: "Other", quantity: 5, room: "Study", notes: "For notes" }
+      ];
+      rooms.length = 0;
+      items.length = 0;
+      rooms.push(...demoRooms);
+      items.push(...demoItems);
+      saveData();
+      renderRooms();
+      renderRoomOptions();
+      renderFilterRoomOptions();
+      renderItems();
+      alert("Demo data loaded!");
+    }
+
+    document.getElementById('searchInput').addEventListener('input', filterItems);
+    document.getElementById('filterRoom').addEventListener('change', filterItems);
+    document.getElementById('filterCategory').addEventListener('change', filterItems);
+    document.getElementById('itemRoom').addEventListener('change', () => {
+      renderItems();
+    });
+
+    renderRooms();
+    renderRoomOptions();
+    renderFilterRoomOptions();
+    renderItems();
+  </script>
+</body>
+</html>

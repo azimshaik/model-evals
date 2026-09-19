@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Inventory Manager</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --radius: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Header */
+        header {
+            background: var(--surface);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        h1 { margin: 0; font-size: 1.25rem; color: var(--text); }
+
+        .btn-group { display: flex; gap: 0.5rem; }
+
+        button {
+            cursor: pointer;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        button:hover { background: var(--bg); }
+        
+        button.primary { background: var(--primary); color: white; border-color: var(--primary); }
+        button.primary:hover { background: var(--primary-hover); }
+        
+        button.danger { color: var(--danger); border-color: var(--danger); }
+        button.danger:hover { background: #fef2f2; }
+
+        /* Controls */
+        .controls {
+            background: var(--surface);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-box {
+            flex-grow: 1;
+            min-width: 200px;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        input, select {
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Room Tabs */
+        .room-tabs {
+            display: flex;
+            gap: 0.25rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab-btn {
+            white-space: nowrap;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Item List */
+        .item-list {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .item-list table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: var(--text-light);
+            white-space: nowrap;
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        .item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .low-stock {
+            color: var(--danger);
+            font-weight: bold;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .modal h2 { margin-top: 0; }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--text);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            pointer-events: none;
+            z-index: 200;
+        }
+        #toast.show { opacity: 1; transform: translateY(0); }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .controls { flex-direction: column; align-items: stretch; }
+            .search-box { flex-direction: column; }
+            .item-list table, .item-list th, .item-list td { display: block; width: 100%; }
+            .item-list tr { margin-bottom: 1rem; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+            .item-list td { padding: 0.5rem; border-bottom: none; display: flex; justify-content: space-between; align-items: center; }
+            .item-list td::before { content: attr(data-label); font-weight: 600; color: var(--text-light); }
+            .item-list td:last-child { border-bottom: none; }
+            .item-actions { margin-left: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🏠 Home Inventory</h1>
+        <div class="btn-group">
+            <button onclick="app.exportData()">Export JSON</button>
+            <button onclick="document.getElementById('import-file').click()">Import JSON</button>
+            <input type="file" id="import-file" style="display: none" onchange="app.importData(this)">
+            <button onclick="app.loadDemo()">Load Demo</button>
+        </div>
+    </header>
+
+    <div class="controls">
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Search items..." oninput="app.filterItems()">
+            <select id="filter-room" onchange="app.filterItems()">
+                <option value="">All Rooms</option>
+            </select>
+            <select id="filter-category" onchange="app.filterItems()">
+                <option value="">All Categories</option>
+            </select>
+        </div>
+        <button class="primary" onclick="app.openModal('item')">+ Add Item</button>
+        <button onclick="app.openModal('room')">+ Add Room</button>
+    </div>
+
+    <div id="room-tabs" class="room-tabs">
+        <!-- Room buttons injected here -->
+    </div>
+
+    <div id="item-list" class="item-list">
+        <table>
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Qty</th>
+                    <th>Category</th>
+                    <th>Room</th>
+                    <th>Notes</th>
+                    <th style="width: 80px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="items-tbody">
+                <!-- Items injected here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+        <h2 id="modal-title">Add Item</h2>
+        <form id="modal-form" onsubmit="app.handleFormSubmit(event)">
+            <input type="hidden" id="item-id">
+            <input type="hidden" id="room-id">
+            
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="inp-name" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" id="inp-qty" min="0" required>
+            </div>
+
+            <div class="form-group">
+                <label>Category</label>
+                <select id="inp-category">
+                    <option value="Food">Food</option>
+                    <option value="Tools">Tools</option>
+                    <option value="Documents">Documents</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Room</label>
+                <select id="inp-room">
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="inp-notes" rows="2"></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" onclick="app.closeModal()">Cancel</button>
+                <button type="submit" class="primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="toast">Notification</div>
+
+<script>
+/**
+ * Home Inventory Manager
+ * Single file application logic.
+ */
+const app = {
+    data: {
+        rooms: [],
+        items: []
+    },
+    currentRoomId: null,
+    categories: ['Food', 'Tools', 'Documents', 'Electronics', 'Cleaning', 'Other'],
+
+    init() {
+        this.loadData();
+        this.renderRooms();
+        this.renderItems();
+        this.setupEventListeners();
+    },
+
+    // --- Persistence ---
+    loadData() {
+        const storedRooms = localStorage.getItem('homeInventory_rooms');
+        const storedItems = localStorage.getItem('homeInventory_items');
+
+        if (storedRooms) {
+            this.data.rooms = JSON.parse(storedRooms);
+        } else {
+            this.data.rooms = ['Kitchen', 'Garage', 'Study'];
+        }
+
+        if (storedItems) {
+            this.data.items = JSON.parse(storedItems);
+        } else {
+            this.data.items = [];
+        }
+
+        this.currentRoomId = this.data.rooms.length > 0 ? this.data.rooms[0] : null;
+    },
+
+    saveData() {
+        localStorage.setItem('homeInventory_rooms', JSON.stringify(this.data.rooms));
+        localStorage.setItem('homeInventory_items', JSON.stringify(this.data.items));
+    },
+
+    // --- Rendering ---
+    renderRooms() {
+        const container = document.getElementById('room-tabs');
+        container.innerHTML = '';
+        
+        if (this.data.rooms.length === 0) {
+            container.innerHTML = '<span style="color:#64748b; padding: 0.5rem;">No rooms defined. Add one to get started.</span>';
+            return;
+        }
+
+        this.data.rooms.forEach(room => {
+            const btn = document.createElement('button');
+            btn.className = `tab-btn ${this.currentRoomId === room ? 'active' : ''}`;
+            btn.textContent = room;
+            btn.onclick = () => this.switchRoom(room);
+            container.appendChild(btn);
+        });
+    },
+
+    renderItems() {
+        const tbody = document.getElementById('items-tbody');
+        tbody.innerHTML = '';
+
+        // Filter Logic
+        const searchTerm = document.getElementById('search-input').value.toLowerCase();
+        const filterRoom = document.getElementById('filter-room').value;
+        const filterCat = document.getElementById('filter-category').value;
+
+        let filtered = this.data.items.filter(item => {
+            const matchSearch = item.name.toLowerCase().includes(searchTerm) || 
+                                (item.notes && item.notes.toLowerCase().includes(searchTerm));
+            const matchRoom = filterRoom ? item.room === filterRoom : true;
+            const matchCat = filterCat ? item.category === filterCat : true;
+            return matchSearch && matchRoom && matchCat;
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 2rem; color: #64748b;">No items found</td></tr>';
+            return;
+        }
+
+        filtered.forEach(item => {
+            const tr = document.createElement('tr');
+            const isLowStock = item.quantity <= 2;
+            
+            tr.innerHTML = `
+                <td data-label="Name">${item.name}</td>
+                <td data-label="Qty" class="${isLowStock ? 'low-stock' : ''}">${item.quantity}</td>
+                <td data-label="Category"><span class="badge">${item.category}</span></td>
+                <td data-label="Room">${item.room}</td>
+                <td data-label="Notes">${item.notes || '-'}</td>
+                <td data-label="Actions">
+                    <div class="item-actions">
+                        <button onclick="app.editItem('${item.id}')" style="padding: 2px 8px;">Edit</button>
+                        <button onclick="app.deleteItem('${item.id}')" class="danger" style="padding: 2px 8px;">Del</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    },
+
+    // --- Actions ---
+    switchRoom(roomName) {
+        this.currentRoomId = roomName;
+        this.renderRooms();
+        this.filterItems(); // Re-render items based on new room
+    },
+
+    filterItems() {
+        this.renderItems();
+    },
+
+    openModal(type) {
+        const overlay = document.getElementById('modal-overlay');
+        const title = document.getElementById('modal-title');
+        const form = document.getElementById('modal-form');
+        
+        form.reset();
+        document.getElementById('item-id').value = '';
+        document.getElementById('room-id').value = '';
+
+        if (type === 'room') {
+            title.textContent = 'Add Room';
+            form.querySelector('#inp-name').setAttribute('id', 'inp-room-name');
+            form.querySelector('#inp-name').setAttribute('placeholder', 'Room Name');
+        } else {
+            title.textContent = 'Add Item';
+            form.querySelector('#inp-name').setAttribute('id', 'inp-name');
+            form.querySelector('#inp-name').setAttribute('placeholder', 'Item Name');
+            
+            // Populate Room Select
+            const roomSelect = document.getElementById('inp-room');
+            roomSelect.innerHTML = '';
+            this.data.rooms.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r;
+                opt.textContent = r;
+                roomSelect.appendChild(opt);
+            });
+        }
+        
+        overlay.classList.add('open');
+    },
+
+    closeModal() {
+        document.getElementById('modal-overlay').classList.remove('open');
+    },
+
+    handleFormSubmit(e) {
+        e.preventDefault();
+        
+        const id = document.getElementById('item-id').value;
+        const name = document.getElementById('inp-name').value;
+        const qty = parseInt(document.getElementById('inp-qty').value);
+        const cat = document.getElementById('inp-category').value;
+        const room = document.getElementById('inp-room').value;
+        const notes = document.getElementById('inp-notes').value;
+
+        if (id) {
+            // Edit
+            const index = this.data.items.findIndex(i => i.id === id);
+            if (index > -1) {
+                this.data.items[index] = { ...this.data.items[index], name, quantity: qty, category: cat, room, notes };
+                this.showToast('Item updated');
+            }
+        } else {
+            // Add Room
+            if (name.trim() === '') return;
+            this.data.rooms.push(name.trim());
+            this.showToast('Room added');
+        }
+
+        // Add Item
+        if (name.trim() !== '' && !isNaN(qty)) {
+            const newItem = {
+                id: Date.now().toString(),
+                name,
+                quantity: qty,
+                category: cat,
+                room,
+                notes
+            };
+            this.data.items.push(newItem);
+            this.showToast('Item added');
+        }
+
+        this.saveData();
+        this.closeModal();
+        this.renderRooms();
+        this.renderItems();
+    },
+
+    editItem(id) {
+        const item = this.data.items.find(i => i.id === id);
+        if (!item) return;
+
+        document.getElementById('item-id').value = item.id;
+        document.getElementById('inp-name').value = item.name;
+        document.getElementById('inp-qty').value = item.quantity;
+        document.getElementById('inp-category').value = item.category;
+        document.getElementById('inp-room').value = item.room;
+        document.getElementById('inp-notes').value = item.notes || '';
+        
+        this.openModal('item');
+    },
+
+    deleteItem(id) {
+        if (!confirm('Delete this item?')) return;
+        
+        this.data.items = this.data.items.filter(i => i.id !== id);
+        this.saveData();
+        this.renderItems();
+        this.showToast('Item deleted');
+    },
+
+    // --- Import / Export ---
+    exportData() {
+        const dataStr = JSON.stringify(this.data);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'home-inventory-backup.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    },
+
+    importData(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                if (json.rooms && Array.isArray(json.rooms) && json.items && Array.isArray(json.items)) {
+                    this.data = json;
+                    this.saveData();
+                    this.renderRooms();
+                    this.renderItems();
+                    this.showToast('Data imported successfully');
+                } else {
+                    alert('Invalid file format');
+                }
+            } catch (err) {
+                alert('Error parsing JSON file');
+            }
+        };
+        reader.readAsText(file);
+        input.value = ''; // Reset input
+    },
+
+    loadDemo() {
+        if (!confirm('This will overwrite your current data with demo data. Continue?')) return;
+
+        this.data = {
+            rooms: ['Kitchen', 'Garage', 'Study', 'Bedroom'],
+            items: [
+                { id: '1', name: 'Milk', quantity: 1, category: 'Food', room: 'Kitchen', notes: 'Needs restocking' },
+                { id: '2', name: 'Wrench Set', quantity: 2, category: 'Tools', room: 'Garage', notes: 'Used for bikes' },
+                { id: '3', name: 'USB Cable', quantity: 5, category: 'Electronics', room: 'Study', notes: 'For laptop' },
+                { id: '4', name: 'Paperclips', quantity: 10, category: 'Documents', room: 'Study', notes: '' },
+                { id: '5', name: 'Dish Soap', quantity: 0, category: 'Cleaning', room: 'Kitchen', notes: 'Empty!' },
+                { id: '6', name: 'Winter Jacket', quantity: 1, category: 'Other', room: 'Bedroom', notes: 'In closet' }
+            ]
+        };
+        this.saveData();
+        this.renderRooms();
+        this.renderItems();
+        this.showToast('Demo data loaded');
+    },
+
+    showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    },
+
+    setupEventListeners() {
+        // Populate Room Select in modal
+        const roomSelect = document.getElementById('inp-room');
+        if (roomSelect) {
+            roomSelect.innerHTML = '';
+            this.data.rooms.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r;
+                opt.textContent = r;
+                roomSelect.appendChild(opt);
+            });
+        }
+    }
+};
+
+// Start App
+document.addEventListener('DOMContentLoaded', () => {
+    app.init();
+});
+</script>
+
+</body>
+</html>

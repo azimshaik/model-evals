@@ -1,0 +1,14 @@
+{
+ "label": "daily-27b-vllm-tp4-nothink",
+ "served_by": "vLLM TP4 (4x RTX 2080 Ti), 175 W per-card cap, thinking DISABLED",
+ "loads_in_browser": true,
+ "js_errors": "none observed",
+ "functional_tests": {
+  "demo_data_button": "PASS - loaded 11 items / 4 rooms, toast shown",
+  "add_item": "PASS - item appeared, counters 11->12 items, 23->30 units",
+  "search_filter": "PASS - searching 'widget' hid unrelated items",
+  "persistence_after_reload": "PASS - added item still present after page reload (localStorage)"
+ },
+ "feature_markers_all_present": true,
+ "notes": "First attempt with thinking ENABLED burned the entire 16k token budget on reasoning and produced zero code (finish_reason=length). Report that honestly."
+}

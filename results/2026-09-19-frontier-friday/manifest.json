@@ -1,0 +1,117 @@
+[
+ {
+  "model": "local__qwen3.5-35b-a3b-iq4_xs",
+  "served_by": "Qwen3.5-35B-A3B (MoE, ~3B active) UD-IQ4_XS, llama.cpp",
+  "engine": "llama.cpp-prism (CUDA)",
+  "gpus_used": 1,
+  "ok": true,
+  "elapsed_s": 67.3,
+  "completion_tokens": 6018,
+  "ttft_s": 0.9,
+  "decode_tok_s": 90.66,
+  "gpu_watts_avg": 187.0,
+  "tokens_per_watt": 0.485,
+  "energy_kwh": 0.003496,
+  "app_bytes": 24497,
+  "reasoning_chars": 5800,
+  "browser_verification": "works end to end and was the fastest + most power-efficient of the four",
+  "files": {
+   "raw": "local__qwen3.5-35b-a3b-iq4_xs.txt",
+   "app": "apps/qwen35-35b-a3b-1card/index.html",
+   "metrics": "apps/qwen35-35b-a3b-1card/metrics.json",
+   "thinking": "thinking/qwen35-35b-a3b-1card.txt"
+  }
+ },
+ {
+  "model": "local__qwen3-8b-q4_k_m",
+  "served_by": "Qwen3-8B Q4_K_M, llama.cpp",
+  "engine": "llama.cpp-prism (CUDA)",
+  "gpus_used": 1,
+  "ok": true,
+  "elapsed_s": 44.0,
+  "completion_tokens": 3552,
+  "ttft_s": 0.59,
+  "decode_tok_s": 81.84,
+  "gpu_watts_avg": 185.0,
+  "tokens_per_watt": 0.442,
+  "energy_kwh": 0.002261,
+  "app_bytes": 14511,
+  "reasoning_chars": 3948,
+  "browser_verification": "works end to end; smallest and plainest file (14.2 KiB)",
+  "files": {
+   "raw": "local__qwen3-8b-q4_k_m.txt",
+   "app": "apps/qwen3-8b-1card/index.html",
+   "metrics": "apps/qwen3-8b-1card/metrics.json",
+   "thinking": "thinking/qwen3-8b-1card.txt"
+  }
+ },
+ {
+  "model": "local__qwen3.5-9b-ud-q4_k_xl",
+  "served_by": "Qwen3.5-9B UD-Q4_K_XL, llama.cpp",
+  "engine": "llama.cpp-prism (CUDA)",
+  "gpus_used": 1,
+  "ok": true,
+  "elapsed_s": 92.2,
+  "completion_tokens": 6666,
+  "ttft_s": 0.99,
+  "decode_tok_s": 73.1,
+  "gpu_watts_avg": 187.0,
+  "tokens_per_watt": 0.391,
+  "energy_kwh": 0.004789,
+  "app_bytes": 21330,
+  "reasoning_chars": 4563,
+  "browser_verification": "(not performed)",
+  "files": {
+   "raw": "local__qwen3.5-9b-ud-q4_k_xl.txt",
+   "app": "apps/qwen35-9b-1card/index.html",
+   "metrics": "apps/qwen35-9b-1card/metrics.json",
+   "thinking": "thinking/qwen35-9b-1card.txt"
+  }
+ },
+ {
+  "model": "local__qwen3.8-27b-nvfp4-tp4",
+  "served_by": "Qwen3.8-27B-NVFP4, vLLM TP4 (daily engine)",
+  "engine": "vLLM 0.1.17 sm75 fork",
+  "gpus_used": 4,
+  "ok": true,
+  "elapsed_s": 248.7,
+  "completion_tokens": 9746,
+  "ttft_s": 0.39,
+  "decode_tok_s": 39.25,
+  "gpu_watts_avg": 690.0,
+  "tokens_per_watt": 0.057,
+  "energy_kwh": 0.047668,
+  "app_bytes": 39010,
+  "reasoning_chars": 82918,
+  "browser_verification": "(not performed)",
+  "files": {
+   "raw": "local__qwen3.8-27b-nvfp4-tp4.txt",
+   "app": "apps/daily-27b-vllm-tp4-nothink/index.html",
+   "metrics": "apps/daily-27b-vllm-tp4-nothink/metrics.json",
+   "thinking": "thinking/daily-27b-vllm-tp4-nothink.txt"
+  }
+ },
+ {
+  "model": "local__ternary-bonsai-2-27b-ptq1_0",
+  "served_by": "Ternary Bonsai 2 27B PTQ1_0 (5.95 GB), llama.cpp",
+  "engine": "llama.cpp-prism (CUDA)",
+  "gpus_used": 1,
+  "ok": true,
+  "elapsed_s": 336.3,
+  "completion_tokens": 9816,
+  "ttft_s": 1.23,
+  "decode_tok_s": 29.3,
+  "gpu_watts_avg": 191.0,
+  "tokens_per_watt": 0.153,
+  "energy_kwh": 0.017843,
+  "app_bytes": 32980,
+  "reasoning_chars": 54646,
+  "browser_verification": "renders and looks complete; demo data loads; adding an item does not work - the in-progress form is cleared and nothing is saved",
+  "files": {
+   "raw": "local__ternary-bonsai-2-27b-ptq1_0.txt",
+   "app": "apps/ternary-27b-1card/index.html",
+   "metrics": "apps/ternary-27b-1card/metrics.json",
+   "thinking": "thinking/ternary-27b-1card.txt"
+  }
+ }
+]

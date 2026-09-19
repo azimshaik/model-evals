@@ -1,0 +1,55 @@
+Okay, I need to create a single-file web app for a home organization and inventory manager. Let me start by breaking down the requirements.
+
+First, the app must work offline, so I'll use localStorage for persistence. No external libraries, so everything has to be in one HTML file with inline CSS and JS. The user wants all features in one file, so I need to structure the HTML, CSS, and JavaScript properly.
+
+Rooms management: create, rename, delete rooms. So I'll need a section for rooms with buttons to add, edit, and delete. Each room should have a list of items. Maybe a dropdown to select the room when adding items.
+
+Items: add with name, quantity, category (from a fixed list), room, and optional notes. Need forms for adding/editing items. Also, edit and delete functionality for items. Maybe a table or list view for items.
+
+Search functionality: a text box for live filtering by name/notes, and filters by room and category. So I'll need input fields for search, room selection, and category dropdown. The search should update dynamically as the user types.
+
+Low-stock indicator: items with quantity <=2 highlighted. So in the UI, I'll add a class or style to those items when they meet that condition.
+
+Persistence: everything saved in localStorage. Need to handle saving and loading data. Also, a "Load demo data" button that fills in example data. So I'll create a function to generate demo data and save it to localStorage.
+
+Export/Import: buttons to download JSON and load from a JSON file. For export, I'll create a Blob with the data and trigger a download. For import, maybe a file input that reads the JSON and loads it into localStorage.
+
+UI: clean and responsive. Use flexbox or grid for layout. Ensure it's usable on desktop and phone, no horizontal scrolling. Keyboard accessible forms, so labels and proper form elements. Visible feedback when saving or deleting, like alerts or messages.
+
+Code quality: well-named variables, sensible structure. Avoid console errors, so I'll make sure all elements are properly referenced and handle errors.
+
+Let me outline the structure:
+
+HTML structure:
+- Header with app title
+- Section for rooms management
+- Section for items management (with search/filter)
+- Buttons for export/import and load demo data
+
+CSS: Use flexbox for layout, responsive design, maybe some media queries for mobile. Style the tables, buttons, and highlights.
+
+JavaScript:
+- Load data from localStorage on page load.
+- Functions to handle adding, editing, deleting rooms and items.
+- Search and filter functions that update the displayed items.
+- Low-stock highlighting based on quantity.
+- Export/import functions using JSON.
+- Demo data function.
+
+Now, I need to make sure all these parts are integrated into one HTML file. Let me start writing the HTML, then add the CSS and JS.
+
+For rooms, maybe a list where each room has a name and a list of items. When adding a room, it's added to the list. Editing a room would involve renaming it. Deleting removes it from the list.
+
+For items, each room's items are displayed in a table or list. When adding an item, select the room, category, etc. The form should be dynamic based on the selected room.
+
+Search and filters: a search input, a dropdown for rooms, and a dropdown for categories. The filter function would combine these to show only matching items.
+
+Low-stock: when rendering items, check the quantity and apply a class if <=2.
+
+Persistence: when the page loads, check localStorage for saved data. If not, use demo data. All operations (add, edit, delete) should save to localStorage.
+
+Export: create a JSON string of the data and download it. Import: read the file input, parse JSON, and save to localStorage.
+
+Testing for errors: make sure all elements are properly referenced, event listeners are attached, and localStorage is handled correctly.
+
+Now, putting it all together. Let me write the code step by step, ensuring all requirements are met.

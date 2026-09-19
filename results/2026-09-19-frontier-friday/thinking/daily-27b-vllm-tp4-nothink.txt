@@ -1,0 +1,1828 @@
+The user is asking for a complete single-file web app: a home organization & inventory manager. Requirements:
+
+1. Room management: create, rename, delete
+2. Items: add (name, quantity, category from a fixed list, room, optional notes), edit, delete
+3. Search: live filter by name/notes, filter by room and category
+4. Low-stock indicator: quantity <= 2 is highlighted
+5. Persistence: localStorage, "Load demo data" button
+6. Export/Import: JSON download, load from JSON file
+7. UI: clean, responsive, no horizontal scroll, keyboard-accessible forms, visible feedback (toasts)
+8. Code quality: single HTML file, inline style/script, no frameworks, well-named variables, no console errors
+
+Output contract: a single fenced code block containing the complete HTML file, nothing else. Start with <!DOCTYPE html> and end with </html>.
+
+Design intuition: I want this to feel crafted and alive — layered background, motion, micro-interactions, strong typographic contrast. I'll steer away from generic defaults and pick something distinctive to the subject.
+
+Subject: home organization & inventory. What's distinctive? A household ledger / pantry shelf / storage closet vibe. Think of a "storage cabinet" aesthetic — warm wood tones? Or a "clipboard / inventory sheet" aesthetic? Or a "pantry label" aesthetic with tags?
+
+Let me think of a distinctive palette. Options:
+- Deep forest green + warm paper + amber/mustard accents (pantry / apothecary vibe)
+- Navy + coral?
+- "Storage bin" aesthetic: bold color-coded bins (like a toy storage system) — playful, chunky, with color-coded categories.
+
+I like the "storage bin / household ledger" concept: a warm, deep teal or green header like a painted cabinet, paper-like content area, color-coded category tags like bin labels. Low-stock items get a warm amber/red flag.
+
+Typography: pair a distinctive display face with a readable body face. No external fonts (no CDN). So I have to use a system font stack. I can pair a display serif or slab with a sans-serif body. System options:
+- Display: "Georgia", "Iowan Old Style", "Palatino" — serif. Or a slab-ish stack: "Rockwell", "Roboto Slab" (not on all systems). Cross-platform safe: Georgia is widely available. For a household ledger, a strong serif display (Georgia / "Iowan Old Style" / "Palatino Linotype") with a humanist sans body (system-ui / "Segoe UI" / "Helvetica Neue") works.
+
+Actually, for a "storage bin" playful vibe, a chunky display could be: font-family: "Arial Black", "Avenir Next Heavy"... hmm. Let me go with a "household ledger" aesthetic:
+
+- Header: deep green (like a painted cabinet / chalkboard pantry), with a subtle pattern (repeating diagonal stripes or a dot grid via CSS gradients — layered background).
+- Body: warm off-white paper with a subtle grid/dot texture.
+- Accent: amber/mustard for highlights, red for low stock.
+- Category colors: Food = green, Tools = steel blue, Documents = plum, Electronics = teal, Cleaning = sky, Other = gray.
+
+Let me pick a palette:
+- Ink: #1f2a24 (deep greenish black)
+- Header bg: #17352b or #14342b (deep pine) with subtle pattern
+- Paper: #f4f1e9? That's a bit cream. Let me use a cooler paper: #f2f4ef (pale sage white) or #eef1ea.
+- Accent: #e0a428 (mustard) or #d9822b (amber).
+- Low stock: #c2452d (brick red) or amber.
+
+Actually, let me lean into a "pantry chalkboard + kraft label" feel:
+- Deep green header with chalky texture (subtle noise via repeating gradient).
+- Cards look like labels/tags with a slight border and hard shadow (offset solid shadow, like a printed tag). This gives a distinctive, non-glassmorphism look.
+- Buttons: solid with a 2px border and offset shadow, moving on hover/active.
+
+Micro-interactions:
+- Item rows: hover lift, low-stock pulse (subtle).
+- Toast notifications sliding in.
+- Count badge updates.
+- Item add: new row flashes/highlights.
+- Delete: row collapses/fades.
+- Search input focus ring.
+- Category chips color-coded.
+
+Layout:
+- Header: app title with a small house/box icon (inline SVG), stats (total items, low-stock count), export/import/demo buttons.
+- Main: two-column on desktop: left sidebar with rooms (list with counts, add room, rename, delete), right with search/filter bar and item list. On mobile: stacked, rooms become a horizontal scrollable chip row? "No horizontal scroll" — that refers to the page, not necessarily inner scroll areas. But to be safe, on mobile I can make rooms a wrapping chip grid instead of horizontal scroll. Actually, a wrapping chip row is fine.
+
+Let me design the structure:
+
+Header (deep green):
+- Left: logo mark (SVG box/house) + "Homekeeper" title + tagline "Household inventory & organization"
+- Right: buttons: Load demo, Export JSON, Import JSON (file input hidden)
+
+Stats strip: total items, room count, low-stock count — as small stat blocks. Maybe integrated into the header or below it.
+
+Main grid:
+- Aside (rooms panel): "Rooms" heading, add-room form (input + button), room list: each row has name, item count, rename (pencil) and delete (trash) buttons. Rename is inline: click pencil → input appears with save/cancel.
+- Section (items):
+  - Toolbar: search input (with icon), room filter select, category filter select, clear filters button (shown when active), item count "Showing X of Y".
+  - "Add item" form: could be a collapsible panel or always-visible form at the top of the item list. Fields: name (text), quantity (number, min 0/1), category (select), room (select), notes (textarea). Add button. When editing, the form switches to "Edit item" mode with a cancel button.
+  - Item list: each item card/row: name (bold), category tag (colored), room tag, quantity with +/- steppers? The requirement is edit/delete; quick +/- steppers would be a nice touch and useful for inventory. Let me add quick quantity steppers (− / +) that update instantly. That's a nice micro-interaction and genuinely useful.
+  - Low stock: quantity <= 2 → row gets a left border/flag "Low" badge, amber/red highlight.
+  - Empty state: friendly message with an illustration (SVG) and a hint (load demo).
+
+Feedback: toast system (bottom center or top right), "Item saved", "Item deleted", "Room renamed", "Data imported", etc. Also a brief highlight animation on the saved row.
+
+Persistence: localStorage key like "homekeeper.v1". Save {rooms: [{id, name}], items: [{id, name, qty, category, roomId, notes, updatedAt}]}. Save on every change.
+
+Export: create a Blob, download "home-inventory.json" via an anchor. Import: hidden file input, read with FileReader, JSON.parse, validate shape (rooms array, items array; sanitize), replace state, save, render, toast. Handle errors with a toast.
+
+Demo data: rooms: Kitchen, Garage, Study, Bathroom? Items: e.g., Kitchen: "Olive oil" qty 1 (low), "Baking soda" 2 (low), "Coffee beans" 4, "Aluminum foil" 1; Garage: "Hammer" 1, "Duct tape" 3, "Extension cord" 2, "Paint (white)" 1; Study: "A4 paper" 12, "Pens (blue)" 8, "USB-C cable" 2; Bathroom: "Toilet paper" 6, "Dish soap" 1. Categories from the fixed list.
+
+Fixed categories: Food, Tools, Documents, Electronics, Cleaning, Other.
+
+IDs: use crypto.randomUUID() with a fallback (Math.random based). Guard: `const makeId = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2));`
+
+Keyboard accessibility:
+- All interactive elements are buttons/inputs with labels (visually hidden labels where needed).
+- Focus-visible styles: clear outline.
+- Forms submit on Enter.
+- Escape key cancels edit mode / closes? Maybe Escape clears search when focused. Keep it simple: Escape in the item form cancels edit mode.
+- aria-live region for toasts (role="status").
+- aria-label on icon-only buttons.
+
+No horizontal scroll: use max-width:100%, box-sizing border-box, flexible grid, word-wrap on long names (overflow-wrap: anywhere).
+
+No console errors: guard everything, no external references.
+
+Now design details:
+
+Fonts:
+- Display: Georgia, 'Iowan Old Style', 'Times New Roman', serif — for headings, gives a ledger feel. Actually, for a "storage bin" playful vibe, a chunky display could be: font-family: "Arial Black", "Avenir Next Heavy"... hmm. Let me go with a "household ledger" aesthetic:
+  - Display: `Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif` — used for the app title and section headings, maybe with a small-caps/letter-spacing treatment.
+  - Body: `system-ui, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif`.
+  - Monospace for quantities: `'SF Mono', 'Cascadia Code', Consolas, 'Roboto Mono', monospace` — quantity numbers in monospace look ledger-like. Nice touch.
+
+Colors:
+- --pine: #16352a (header)
+- --pine-deep: #0e241d
+- --paper: #f3f1e8? That's a bit cream. Let me use a cooler paper: #f2f4ef (pale sage white) or #eef1ea.
+- --ink: #22302a
+- --muted: #5c6b62
+- --line: #d8ddd2
+- --accent (mustard): #e8a020 / hover #d18f12
+- --accent-ink: #3a2a05
+- --low: #c2452d (brick)
+- --card: #ffffff
+- Category colors:
+  - Food: #3e7d4f (green) bg #e3efe4
+  - Tools: #4a5d8f? steel: #3f5e8c bg #e4ebf5
+  - Documents: #7a4a8f plum bg #f0e6f4
+  - Electronics: #0e7490 teal bg #dff1f4
+  - Cleaning: #b0641e? orange bg #fbeedd
+  - Other: #6b7280 gray bg #eceef0
+
+Header pattern: subtle diagonal stripes or dots:
+`background: var(--pine) + repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 14px)` plus a radial glow. Layered.
+
+Body background: paper with a subtle dot grid: `background-color: #eef0e9; background-image: radial-gradient(#d9ded2 1px, transparent 1px); background-size: 22px 22px;` — subtle, alive but quiet.
+
+Cards: white, 1px border #d8ddd2, border-radius 10px (not uniform 2xl), box-shadow: 0 1px 0 rgba(...), and on hover: translateY(-1px) + shadow. Maybe a "tag" aesthetic: item rows with a colored left bar per category? That could be nice: each item row has a 4px left border in the category color. Plus a category chip.
+
+Buttons:
+- .btn: solid white with 1.5px ink border? Or solid pine with white text. Primary (add item): mustard background, ink text, 2px ink border, offset shadow (2px 2px 0 ink) — a "sticker" look. Hover: translate(-1px,-1px) shadow grows; active: translate(1px,1px) shadow shrinks. That's a distinctive micro-interaction.
+- Secondary: white bg, ink border, same offset shadow but smaller.
+- Danger: brick.
+
+Header buttons (on dark): outline light or mustard.
+
+Toasts: bottom center (mobile) / bottom right; dark pine bg, white text, slide up + fade, auto-dismiss after 2.5s, with a small icon (check). role="status" aria-live="polite".
+
+Low stock: row gets a background tint #fdf3e7? Plus a "Low stock" badge with a pulsing dot. Pulse animation on the dot (subtle scale/opacity). Also a stats counter "Low stock: N" in the header, maybe with a warning color when > 0.
+
+Quantity stepper: − and + buttons around a monospace number. Min 0. Update state on click, save, re-render (or update in place). Re-rendering the list is simplest; but to keep the flash animation on save, I'll track lastTouchedId and add a 'flash' class.
+
+Rendering approach: vanilla JS, state object, render functions: renderRooms(), renderItems(), renderStats(), renderFilters (populate selects). Use event delegation where appropriate.
+
+Edit flow: click "Edit" on an item → the form at the top of the items panel is populated, heading changes to "Edit item", a cancel button appears, the form scrolls into view (on mobile), focus on the name field. Save updates.
+
+Delete flow: click "Delete" → confirm? The requirement is visible feedback on delete; a confirm dialog is optional. A native confirm() is ugly but safe. Better: immediate delete with an "Undo" toast! That's a nice touch: keep the deleted item in memory, toast with an Undo button for 5 seconds. That's a strong micro-interaction and prevents accidental data loss. Let me implement undo for item delete. For room delete, items in that room are... options: block delete if items exist? Or move items to "Unassigned"? Simpler: on room delete, its items are deleted too? That's destructive. Better: on room delete, items are kept but roomId becomes null → shown as "No room"? Hmm, the requirement is that items have a room. Let me do this: on room delete, its items are also deleted, with a confirm dialog (native confirm is fine, keyboard accessible). Actually, to keep it clean: use confirm() when a room has items: "Delete 'Garage' and its 4 items?" That's honest and simple. For empty rooms, delete immediately with a toast.
+
+Alternatively, reassign to the first other room. I think confirm + delete is clearest.
+
+Room rename: inline edit in the sidebar: pencil → input + check/cancel. Enter to save, Escape to cancel.
+
+Search: input with a search icon (SVG), filters by name + notes (case-insensitive). Room filter select ("All rooms"), category select ("All categories"). Show a "Clear" button when any filter is active. Show "Showing X of Y items".
+
+Sort: maybe sort by name within the list? Or by most recently updated? Let me sort by name (localeCompare) for a stable ledger feel. Or keep insertion order. Name sort is more useful. Let me sort by name.
+
+Stats: total items (sum of quantities? or count of item rows?). Let me show: "Items: N" (row count), "Units: total quantity", "Low stock: N". Three small stat blocks in the header area or a strip below the header. Let me put a stats strip below the header as part of the header's bottom edge — like a "ledger summary" bar. Actually, put it in the header right side? On mobile it wraps. Let me make a stats row inside the header: three inline stat chips. Keep it compact.
+
+Header layout:
+Row 1: logo + title | action buttons (Demo, Export, Import)
+Row 2 (or same row on wide): stats: Items N · Units N · Low stock N (with a dot indicator)
+
+Maybe simpler: header has title on the left, buttons on the right; below the header a thin "summary bar" with stats and a low-stock alert. Let me integrate the stats into a strip at the bottom of the header with a top border rgba(255,255,255,.15).
+
+Empty states:
+- No rooms: sidebar shows a hint "Add your first room".
+- No items at all: big empty state with an SVG box illustration, "Your shelves are empty", buttons: "Load demo data" and "Add an item".
+- No items matching filters: "No items match your filters" + clear filters button.
+
+Accessibility details:
+- <label for> on all inputs.
+- aria-live="polite" on the toast container.
+- aria-label on icon buttons.
+- focus-visible: 3px outline accent, offset 2px.
+- prefers-reduced-motion: reduce animations.
+
+Now let me write the code carefully.
+
+HTML structure:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homekeeper — Household Inventory</title>
+<style> ... </style>
+</head>
+<body>
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <svg logo>...</svg>
+      <div>
+        <h1>Homekeeper</h1>
+        <p class="tagline">Household inventory &amp; organization</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="demoBtn" class="btn btn-ghost">Load demo data</button>
+      <button id="exportBtn" class="btn btn-ghost">Export JSON</button>
+      <button id="importBtn" class="btn btn-ghost">Import JSON</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+  </div>
+  <div class="summary-bar">
+    <div class="header-inner">
+      <span class="stat">Items <strong id="statItems">0</strong></span>
+      <span class="stat">Units <strong id="statUnits">0</strong></span>
+      <span class="stat stat-low" id="lowStat">Low stock <strong id="statLow">0</strong></span>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="panel rooms-panel" aria-labelledby="roomsHeading">
+    <div class="panel-head">
+      <h2 id="roomsHeading">Rooms</h2>
+      <span class="count-pill" id="roomCount">0</span>
+    </div>
+    <form id="roomForm" class="room-form">
+      <label class="sr-only" for="roomNameInput">New room name</label>
+      <input id="roomNameInput" type="text" placeholder="e.g. Pantry" autocomplete="off">
+      <button type="submit" class="btn btn-primary btn-sm">Add</button>
+    </form>
+    <ul id="roomList" class="room-list"></ul>
+    <p id="roomEmpty" class="hint">No rooms yet — add one above.</p>
+  </aside>
+
+  <section class="panel items-panel" aria-labelledby="itemsHeading">
+    <div class="panel-head">
+      <h2 id="itemsHeading">Items</h2>
+      <span class="count-pill" id="itemCount">0</span>
+    </div>
+
+    <form id="itemForm" class="item-form" novalidate? (use required + JS check)>
+      <h3 id="itemFormTitle">Add an item</h3>
+      <div class="form-grid">
+        <div class="field field-name">
+          <label for="itemName">Name</label>
+          <input id="itemName" type="text" required placeholder="e.g. Duct tape">
+        </div>
+        <div class="field">
+          <label for="itemQty">Quantity</label>
+          <input id="itemQty" type="number" min="0" step="1" value="1" required>
+        </div>
+        <div class="field">
+          <label for="itemCategory">Category</label>
+          <select id="itemCategory">...options...</select>
+        </div>
+        <div class="field">
+          <label for="itemRoom">Room</label>
+          <select id="itemRoom"></select>
+        </div>
+        <div class="field field-notes">
+          <label for="itemNotes">Notes <span class="optional">(optional)</span></label>
+          <textarea id="itemNotes" rows="2" placeholder="Where it's stored, expiry, etc."></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="itemSubmitBtn">Add item</button>
+        <button type="button" class="btn btn-quiet" id="itemCancelBtn" hidden>Cancel</button>
+      </div>
+    </form>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg search icon>
+        <label class="sr-only" for="searchInput">Search items</label>
+        <input id="searchInput" type="search" placeholder="Search by name or notes…">
+      </div>
+      <select id="roomFilter" aria-label="Filter by room"><option value="">All rooms</option></select>
+      <select id="categoryFilter" aria-label="Filter by category"><option value="">All categories</option></select>
+      <button id="clearFilters" class="btn btn-quiet" hidden>Clear</button>
+    </div>
+    <p class="result-line" id="resultLine" aria-live="polite">Showing 0 of 0 items</p>
+
+    <ul id="itemList" class="item-list"></ul>
+    <div id="emptyState" class="empty" hidden> ... </div>
+  </section>
+</main>
+
+<div id="toastRegion" class="toast-region" role="status" aria-live="polite"></div>
+
+<script> ... </script>
+</body>
+</html>
+```
+
+Wait — the item form requires a room. If there are no rooms, the room select is empty. Should I allow adding an item without a room? The requirement is that items have a room. Options: disable the add-item form when there are no rooms, with a hint "Add a room first". Or allow "No room". Let me handle it: if there are no rooms, show a hint in the form area and disable the submit? Simpler: the room select shows a disabled option "Add a room first" and the form's submit is blocked with a toast "Add a room first". Actually, cleaner UX: if rooms are empty, show a message in the items panel: "Create a room first, then add items." and hide the form? Hmm, but the demo button solves it quickly. Let me do this: the room select has a placeholder option "— select a room —" (value ""), and on submit if empty → toast error "Please choose a room (add one in the Rooms panel)". That's forgiving and clear.
+
+Actually, even better: auto-create? No, keep it explicit.
+
+Item row markup:
+
+```html
+<li class="item-card cat-food" data-id="...">
+  <div class="item-main">
+    <div class="item-title-row">
+      <h3 class="item-name">Duct tape</h3>
+      <span class="badge badge-low">Low stock</span>
+    </div>
+    <div class="item-meta">
+      <span class="chip chip-cat">Tools</span>
+      <span class="chip chip-room">Garage</span>
+    </div>
+    <p class="item-notes">By the workbench</p>
+  </div>
+  <div class="item-side">
+    <div class="qty-stepper">
+      <button class="qty-btn" data-action="dec" aria-label="Decrease quantity">−</button>
+      <span class="qty-value">3</span>
+      <button class="qty-btn" data-action="inc" aria-label="Increase quantity">+</button>
+    </div>
+    <div class="item-actions">
+      <button data-action="edit" class="icon-btn" aria-label="Edit Duct tape">pencil svg</button>
+      <button data-action="delete" class="icon-btn icon-danger" aria-label="Delete Duct tape">trash svg</button>
+    </div>
+  </div>
+</li>
+```
+
+Event delegation on #itemList for clicks on [data-action].
+
+Category color via a class: .cat-food { --cat: ...; --cat-bg: ... } and the chip uses var(--cat-bg) with color var(--cat). Left border of the card uses var(--cat).
+
+Low stock: .item-card.low { background: #fff7ef; border-color: #f0c9a8? } plus a badge with a pulsing dot.
+
+Flash animation on save: .item-card.flash { animation: flash 1.2s ease } keyframes background highlight.
+
+Delete animation: add .removing class (opacity/transform transition), then re-render after 200ms. Keep it simple: setTimeout 180ms.
+
+Toast:
+```js
+function showToast(message, { type = 'ok', actionLabel, onAction } = {})
+```
+Create a div.toast, append, force reflow, add .show, remove after 3s (5s if there's an action). If there's an action, include a button.
+
+Undo delete: store the deleted item + its index; on undo, re-insert and save.
+
+Now the JS structure:
+
+```js
+(() => {
+'use strict';
+
+const STORAGE_KEY = 'homekeeper.inventory.v1';
+const CATEGORIES = ['Food','Tools','Documents','Electronics','Cleaning','Other'];
+const LOW_STOCK_THRESHOLD = 2;
+
+const state = { rooms: [], items: [], editingItemId: null, deletedItem: null };
+
+// element refs
+const els = { ... } // grab all
+
+// utils
+function makeId() {...}
+function escapeHtml(str) {...}
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify({rooms, items})) }
+function load() { try parse & validate }
+
+// validation for import
+function normalizeData(raw) { returns {rooms, items} or throws }
+
+// render
+function renderAll() { renderRooms(); renderItems(); renderStats(); syncFilterOptions(); }
+function renderRooms() {...}
+function renderItems() {...}
+function renderStats() {...}
+
+// actions
+addRoom, renameRoom, deleteRoom, addItem, updateItem, deleteItem, changeQty, loadDemo, exportData, importData
+
+// events
+...
+init();
+})();
+```
+
+escapeHtml for user content (name, notes, room name) — important to avoid breaking markup.
+
+```js
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+```
+
+Filtering:
+
+```js
+function getVisibleItems() {
+  const query = els.search.value.trim().toLowerCase();
+  const roomFilter = els.roomFilter.value;
+  const catFilter = els.categoryFilter.value;
+  return state.items
+    .filter(item => (!roomFilter || item.roomId === roomFilter)
+      && (!catFilter || item.category === catFilter)
+      && (!query || item.name.toLowerCase().includes(query) || (item.notes||'').toLowerCase().includes(query)))
+    .sort((a,b) => a.name.localeCompare(b.name));
+}
+```
+
+Room select in the form: rebuild options on every render, preserving selection when editing.
+
+syncFilterOptions: rebuild the room filter select, preserving the current value if the room still exists; the category filter is static (built once).
+
+Room list item:
+
+```html
+<li class="room-row" data-id>
+  <span class="room-dot" style="--cat: color?"></span>
+  <span class="room-name">Kitchen</span>
+  <span class="room-count">5</span>
+  <button rename> <button delete>
+</li>
+```
+
+Room color: assign a color from a palette by index? Rooms could have a hue for the dot. Nice touch: a palette of 8 colors, room.color = palette[index % len] stored? But the color should be stable across renames; store the color on the room object at creation. On import, assign a color if missing. Let me store `color` on the room. Palette: ['#3e7d4f','#3f5e8c','#7a4a8f','#0e7490','#b0641e','#c2452d','#5b7553','#8a6d3b']... let me pick a harmonious set:
+
+ROOM_COLORS = ['#2f7d5b', '#3f6aa0', '#8a5aa0', '#0f7f8b', '#c07a1f', '#c2543a', '#5f7d3f', '#a05a7a']
+
+The dot uses the room color; the room chip on the item could also use the room color. Nice cohesion.
+
+Rename inline: replace the name span with an input; handle Enter/Escape/blur. Manage with a flag. Implementation:
+
+```js
+function startRenameRoom(roomId) {
+  // build input in the row
+}
+```
+
+Simpler: keep a state.renamingRoomId; renderRooms renders the input if it matches. On input keydown Enter → commit; Escape → cancel; blur → commit (or cancel? commit is friendlier; but blur after clicking cancel... use a flag). Let me do: Enter commits, Escape cancels, blur commits if there's a value, otherwise cancels. Guard against double-commit with a flag.
+
+Actually, to keep the code robust, let me implement rename with a dedicated input and two buttons (✓ ✕) that appear in the row. Buttons: save (type=button) and cancel. Enter in the input triggers save. Escape triggers cancel. Blur: do nothing (keep the edit open) — but then the user might get confused. Let me commit on blur if the value is non-empty. Hmm, blur after clicking the save button would double-commit — guard with a state flag `committing`. Let me do this:
+
+```js
+function commitRoomRename(roomId, value) {
+  const name = value.trim();
+  if (!name) { cancel; toast 'Name cannot be empty'; return; }
+  // duplicate check? allow duplicates? better to prevent exact duplicates (case-insensitive)
+  room.name = name; save(); renderAll(); toast 'Room renamed';
+}
+```
+
+Duplicate room names: allow? It's confusing but harmless. Let me prevent exact duplicates with a toast.
+
+Room delete:
+```js
+function deleteRoom(roomId) {
+  const room = find; const count = items in room;
+  if (count > 0 && !confirm(`Delete "${room.name}" and its ${count} item(s)?`)) return;
+  state.rooms = filter; state.items = items.filter(i => i.roomId !== roomId);
+  if filter was selected, reset; save; renderAll; toast 'Room deleted';
+}
+```
+
+confirm() is keyboard accessible and fine.
+
+Item form submit:
+
+```js
+function handleItemSubmit(e) {
+  e.preventDefault();
+  const name = els.itemName.value.trim();
+  const qty = parseInt(els.itemQty.value, 10);
+  const category = els.itemCategory.value;
+  const roomId = els.itemRoom.value;
+  const notes = els.itemNotes.value.trim();
+  if (!name) { toast 'Please enter an item name'; els.itemName.focus(); return; }
+  if (!Number.isFinite(qty) || qty < 0) { toast 'Quantity must be 0 or more'; els.itemQty.focus(); return; }
+  if (!roomId) { toast 'Choose a room first'; els.itemRoom.focus(); return; }
+  if (state.editingItemId) { update } else { create }
+  save(); renderAll(); flash the row; toast 'Item saved' / 'Item added';
+  resetForm();
+}
+```
+
+Flash: after render, find the li[data-id] and add .flash, remove on animationend.
+
+Edit: populate the form, set the title to "Edit item", submit button text to "Save changes", show cancel, scrollIntoView({behavior:'smooth', block:'nearest'}), focus the name.
+
+Cancel: resetForm.
+
+Quantity stepper: changeQty(id, delta) → qty = max(0, qty+delta); save; renderItems (and stats); small flash? Maybe a quick pop animation on the number. Keep it simple: re-render; add a .bump class to the qty-value of that row.
+
+Demo data:
+
+```js
+const DEMO = {
+  rooms: [
+    { name: 'Kitchen' }, { name: 'Garage' }, { name: 'Study' }, { name: 'Bathroom' }
+  ],
+  items: [
+    { name: 'Olive oil', qty: 1, category: 'Food', room: 'Kitchen', notes: 'Extra virgin — buy before 12 May' },
+    { name: 'Baking soda', qty: 2, category: 'Cleaning', room: 'Kitchen', notes: 'Fridge deodorizer + scrubber' },
+    { name: 'Coffee beans', qty: 4, category: 'Food', room: 'Kitchen', notes: 'Dark roast, 250 g bags' },
+    { name: 'Aluminium foil', qty: 1, category: 'Other', room: 'Kitchen', notes: '' },
+    { name: 'Dish soap', qty: 3, category: 'Cleaning', room: 'Kitchen', notes: 'Lemon' },
+    { name: 'Hammer', qty: 1, category: 'Tools', room: 'Garage', notes: '500 g claw hammer' },
+    { name: 'Duct tape', qty: 2, category: 'Tools', room: 'Garage', notes: 'Black, 50 m roll' },
+    { name: 'Extension cord', qty: 1, category: 'Electronics', room: 'Garage', notes: '10 m, outdoor rated' },
+    { name: 'Paint — white', qty: 2, category: 'Other', room: 'Garage', notes: 'Emulsion, 2.5 L tins' },
+    { name: 'A4 paper', qty: 12, category: 'Documents', room: 'Study', notes: 'Ream in the drawer' },
+    { name: 'USB-C cable', qty: 2, category: 'Electronics', room: 'Study', notes: '1 m, braided' },
+    { name: 'Passport copies', qty: 1, category: 'Documents', room: 'Study', notes: 'Fireproof box, top shelf' },
+    { name: 'Toilet paper', qty: 6, category: 'Cleaning', room: 'Bathroom', notes: '' },
+    { name: 'Hand soap', qty: 1, category: 'Cleaning', room: 'Bathroom', notes: 'Refill bottle' }
+  ]
+};
+```
+
+loadDemo: confirm if existing data? "Load demo data" — if there's existing data, confirm to replace? Or merge? Let me do: if there's existing data, confirm("Replace current data with demo data?"). Then build with new IDs, map room names to IDs, save, render, toast.
+
+Export:
+
+```js
+function exportData() {
+  const payload = { app: 'homekeeper', version: 1, exportedAt: new Date().toISOString(), rooms: state.rooms, items: state.items };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'home-inventory-' + dateStr + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast 'Inventory exported';
+}
+```
+
+Import:
+
+```js
+els.importBtn.addEventListener('click', () => els.importFile.click());
+els.importFile.addEventListener('change', () => {
+  const file = els.importFile.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const raw = JSON.parse(reader.result);
+      const data = normalizeData(raw);
+      state.rooms = data.rooms; state.items = data.items;
+      save(); resetForm(); resetFilters(); renderAll();
+      toast `Imported ${data.items.length} items across ${data.rooms.length} rooms`;
+    } catch (err) { toast 'Could not import: invalid JSON file', type 'error' }
+  };
+  reader.onerror = () => toast 'Could not read file';
+  reader.readAsText(file);
+  els.importFile.value = '';
+});
+```
+
+normalizeData: accept {rooms:[{id?,name}], items:[{name, qty/quantity, category, roomId/room, notes}]} — be lenient: accept room by ID or by name; validate category against the list (fallback 'Other'); qty is a non-negative integer (fallback 0). Filter out invalid items. Assign IDs/colors if missing.
+
+```js
+function normalizeData(raw) {
+  if (!raw || typeof raw !== 'object') throw new Error('bad');
+  const roomsRaw = Array.isArray(raw.rooms) ? raw.rooms : [];
+  const itemsRaw = Array.isArray(raw.items) ? raw.items : [];
+  const rooms = [];
+  const roomIndex = new Map(); // name(lower) -> room
+  roomsRaw.forEach((r, i) => {
+    const name = (r && typeof r.name === 'string' ? r.name : '').trim();
+    if (!name) return;
+    const room = { id: (r && typeof r.id === 'string' && r.id) || makeId(), name, color: ROOM_COLORS[rooms.length % ROOM_COLORS.length] };
+    rooms.push(room);
+    roomIndex.set(name.toLowerCase(), room);
+  });
+  const items = [];
+  itemsRaw.forEach(it => {
+    if (!it || typeof it !== 'object') return;
+    const name = typeof it.name === 'string' ? it.name.trim() : '';
+    if (!name) return;
+    let qty = Number(it.qty ?? it.quantity);
+    if (!Number.isFinite(qty) || qty < 0) qty = 0;
+    qty = Math.floor(qty);
+    let category = CATEGORIES.includes(it.category) ? it.category : 'Other';
+    let roomId = null;
+    if (typeof it.roomId === 'string' && rooms.some(r => r.id === it.roomId)) roomId = it.roomId;
+    else if (typeof it.room === 'string') {
+      const match = roomIndex.get(it.room.trim().toLowerCase());
+      if (match) roomId = match.id;
+    }
+    if (!roomId && rooms.length) roomId = rooms[0].id; // or skip?
+    ...
+  });
+}
+```
+
+Hmm — if the room doesn't exist, assign to the first room? That's a bit arbitrary. Alternative: skip items without a valid room? Data loss. Let me assign to the first room if rooms exist; if there are no rooms at all, skip the item. Actually, if the import has no rooms but has items, we could create an "Unsorted" room. That's kind: if rooms.length === 0 and items exist, create an "Unsorted" room. Let me do that.
+
+Also, dedupe room names on import (case-insensitive): if a duplicate name appears, map to the first.
+
+localStorage load:
+
+```js
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = normalizeData(JSON.parse(raw));
+    state.rooms = data.rooms; state.items = data.items;
+  } catch (e) { /* corrupted — start fresh */ }
+}
+```
+
+Reuse normalizeData — good.
+
+Stats:
+- statItems: state.items.length
+- statUnits: sum of qty
+- statLow: count of items with qty <= 2. Note: qty 0 also counts as low (0 <= 2) — yes, out of stock is definitely low. Maybe show a "Low stock" badge when qty <= 2; for qty 0, maybe a different "Out" badge? Nice detail: qty === 0 → "Out of stock" badge (darker), 1-2 → "Low stock". Let me do that: badge text is qty === 0 ? 'Out of stock' : 'Low stock'. Both highlighted.
+
+Result line: "Showing X of Y items" + maybe "· N low". Keep it simple.
+
+Now CSS. Let me write it carefully with custom properties.
+
+```css
+:root {
+  --pine: #17352b;
+  --pine-deep: #0f261f;
+  --paper: #eef0e8;
+  --card: #ffffff;
+  --ink: #22302a;
+  --muted: #64716a;
+  --line: #d7dcd0;
+  --accent: #e8a020;
+  --accent-deep: #c9860f;
+  --accent-ink: #33240a;
+  --danger: #c2452d;
+  --danger-soft: #fbe9e4;
+  --low-bg: #fdf4e3;
+  --low-line: #eccf9a;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(23,42,34,.08), 0 4px 14px rgba(23,42,34,.06);
+  --font-display: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
+  --font-body: system-ui, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Consolas, Menlo, monospace;
+}
+```
+
+Body:
+```css
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image: radial-gradient(rgba(23,53,43,.07) 1px, transparent 1.5px);
+  background-size: 22px 22px;
+  min-height: 100vh;
+}
+```
+
+Header:
+```css
+.app-header {
+  background-color: var(--pine);
+  background-image:
+    radial-gradient(1200px 400px at 85% -10%, rgba(232,160,32,.18), transparent 60%),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 2px, transparent 2px 16px);
+  color: #f4f6ef;
+  border-bottom: 4px solid var(--accent);
+}
+```
+
+Header inner: max-width 1100px, margin auto, padding, flex wrap.
+
+Brand: logo SVG in a mustard rounded square? Logo: a simple box/crate icon. Let me draw a small SVG: a house with a box inside, or a storage box with a label. Simple:
+
+```svg
+<svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
+  <rect x="6" y="14" width="36" height="28" rx="4" fill="#e8a020"/>
+  <rect x="6" y="14" width="36" height="10" rx="4" fill="#f2b93e"/>  <!-- lid -->
+  <rect x="20" y="26" width="8" height="10" rx="1.5" fill="#17352b"/> <!-- label -->
+  <path d="M14 14 L24 4 L34 14" ... roof?
+</svg>
+```
+
+Maybe a house outline with a box inside. Let me do: a house shape (roof + body) in light color, with a small box inside.
+
+```svg
+<svg viewBox="0 0 48 48">
+  <path d="M24 5 L43 20 H40 V42 H8 V20 H5 Z" fill="#e8a020"/>  house
+  <rect x="18" y="26" width="12" height="10" rx="1.5" fill="#17352b"/> box
+  <rect x="21" y="23" width="6" height="3" rx="1" fill="#0f261f"/> lid line
+</svg>
+```
+
+Good enough, distinctive.
+
+Title: font-display, size clamp(1.5rem, 3vw, 2rem), letter-spacing slight, weight 700. Tagline: small, uppercase, letter-spacing 0.14em, color rgba(244,246,239,.7).
+
+Summary bar: border-top 1px solid rgba(255,255,255,.14); stats inline, monospace numbers, low stat in amber when > 0 (toggle a class).
+
+Buttons:
+
+```css
+.btn {
+  font: inherit; font-weight: 600;
+  border-radius: 8px;
+  padding: .55rem .9rem;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+}
+.btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--pine-deep); box-shadow: 2px 2px 0 var(--pine-deep); }
+.btn-primary:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--pine-deep); background: #f0ac2c; }
+.btn-primary:active { transform: translate(1px,1px); box-shadow: 0 0 0 var(--pine-deep); }
+```
+
+Header ghost buttons:
+```css
+.btn-ghost { background: rgba(255,255,255,.08); color: #f4f6ef; border-color: rgba(255,255,255,.35); }
+.btn-ghost:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.6); }
+```
+
+Quiet button (in light areas):
+```css
+.btn-quiet { background: transparent; color: var(--muted); border-color: transparent; }
+.btn-quiet:hover { color: var(--ink); background: rgba(23,53,43,.06); }
+```
+
+Panels:
+```css
+.layout {
+  max-width: 1100px; margin: 0 auto; padding: 1.25rem 1rem 3rem;
+  display: grid; grid-template-columns: 280px 1fr; gap: 1.25rem; align-items: start;
+}
+@media (max-width: 820px) { .layout { grid-template-columns: 1fr; } }
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.1rem 1.15rem;
+}
+```
+
+Panel head: h2 in display font, size 1.25rem, with a count pill (monospace, bg pine, white, rounded-full, small).
+
+Room form: flex, input flex:1, button.
+
+Room list:
+```css
+.room-list { list-style: none; margin: .75rem 0 0; padding: 0; display: grid; gap: .4rem; }
+.room-row {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem .6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcf9;
+  transition: border-color .15s, background .15s, transform .15s;
+}
+.room-row:hover { border-color: #b9c2b2; background: #f4f7f0; }
+.room-dot { width: 10px; height: 10px; border-radius: 3px; background: var(--room-color); flex: none; }
+.room-name { flex: 1; font-weight: 600; overflow-wrap: anywhere; }
+.room-count { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); background: rgba(23,53,43,.07); padding: .1rem .45rem; border-radius: 999px; }
+```
+
+Icon buttons:
+```css
+.icon-btn {
+  width: 30px; height: 30px; display: grid; place-items: center;
+  border: 1px solid transparent; border-radius: 7px; background: transparent;
+  color: var(--muted); cursor: pointer; transition: ...;
+}
+.icon-btn:hover { background: rgba(23,53,43,.08); color: var(--ink); border-color: var(--line); }
+.icon-danger:hover { background: var(--danger-soft); color: var(--danger); border-color: #eec4b8; }
+```
+
+Item form:
+```css
+.item-form { border: 1px dashed #c3ccba; background: #f7f9f3; border-radius: 10px; padding: 1rem; margin: .9rem 0; }
+.item-form.editing { border-color: var(--accent-deep); background: #fdf6e7; }
+.form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: .7rem; }
+@media (max-width: 640px) { .form-grid { grid-template-columns: 1fr 1fr; } .field-name { grid-column: 1 / -1; } }
+@media (max-width: 420px) { .form-grid { grid-template-columns: 1fr; } }
+.field-notes { grid-column: 1 / -1; }
+label { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display:block; margin-bottom: .3rem; }
+input, select, textarea {
+  font: inherit; color: var(--ink);
+  border: 1.5px solid var(--line); border-radius: 8px;
+  padding: .5rem .6rem; background: #fff; width: 100%;
+  transition: border-color .15s, box-shadow .15s;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--pine); box-shadow: 0 0 0 3px rgba(23,53,43,.15); }
+```
+
+Hmm, focus style: use both? focus-visible for keyboard, but for inputs, focus ring on any focus is standard. OK.
+
+Toolbar:
+```css
+.toolbar { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+.search-wrap { position: relative; flex: 1 1 200px; }
+.search-wrap svg { position: absolute; left: .6rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.search-wrap input { padding-left: 2.1rem; }
+.toolbar select { width: auto; flex: 0 1 150px; }
+```
+
+Item list:
+```css
+.item-list { list-style: none; margin: .75rem 0 0; padding: 0; display: grid; gap: .6rem; }
+.item-card {
+  display: flex; gap: .9rem; align-items: flex-start;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--cat, var(--line));
+  border-radius: 10px;
+  padding: .8rem .9rem;
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s;
+}
+.item-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+```
+
+Category classes:
+```css
+.cat-Food { --cat: #2f7d5b; --cat-soft: #e2f0e7; }
+.cat-Tools { --cat: #3f6aa0; --cat-soft: #e5edf7; }
+.cat-Documents { --cat: #8a5aa0; --cat-soft: #f0e8f6; }
+.cat-Electronics { --cat: #0f7f8b; --cat-soft: #e0f1f3; }
+.cat-Cleaning { --cat: #c07a1f; --cat-soft: #faeedb; }
+.cat-Other { --cat: #6b7a70; --cat-soft: #eceee9; }
+```
+
+Chips:
+```css
+.chip { display: inline-flex; align-items: center; gap: .3rem; font-size: .74rem; font-weight: 700; padding: .18rem .55rem; border-radius: 999px; }
+.chip-cat { background: var(--cat-soft); color: var(--cat); }
+.chip-room { background: rgba(23,53,43,.06); color: var(--muted); }
+.chip-room::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--room-color, var(--muted)); }
+```
+
+Item name: font-display? Maybe keep the name in body font bold 1.02rem; use display font for the name for ledger character — Georgia bold looks great. Let me use display font for item names: `font-family: var(--font-display); font-size: 1.05rem; font-weight: 700;`
+
+Notes: color muted, font-size .85rem, margin-top .35rem, overflow-wrap anywhere.
+
+Quantity stepper:
+```css
+.qty-stepper { display: flex; align-items: center; gap: .15rem; border: 1.5px solid var(--line); border-radius: 999px; padding: .15rem; background: #fbfcf9; }
+.qty-btn { width: 26px; height: 26px; border-radius: 50%; border: none; background: transparent; color: var(--ink); font-size: 1rem; font-weight: 700; cursor: pointer; display:grid; place-items:center; transition: background .12s, transform .12s; }
+.qty-btn:hover { background: rgba(23,53,43,.1); }
+.qty-btn:active { transform: scale(.9); }
+.qty-value { font-family: var(--font-mono); font-weight: 700; min-width: 2.2ch; text-align: center; font-size: .95rem; }
+.qty-value.bump { animation: bump .25s ease; }
+@keyframes bump { 50% { transform: scale(1.35); color: var(--accent-deep); } }
+```
+
+Low stock:
+```css
+.item-card.low { background: var(--low-bg); border-color: var(--low-line); border-left-color: var(--danger); }
+.badge-low { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--danger); background: #fff; border: 1.5px solid var(--danger); padding: .15rem .5rem; border-radius: 999px; }
+.badge-low::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: .4; transform: scale(.75);} }
+```
+
+Flash:
+```css
+.item-card.flash { animation: flash 1.1s ease; }
+@keyframes flash { 0% { background: #fff3c9; box-shadow: 0 0 0 4px rgba(232,160,32,.35);} 100% { } }
+```
+
+Removing:
+```css
+.item-card.removing { opacity: 0; transform: translateX(12px); transition: opacity .18s ease, transform .18s ease; }
+```
+
+Empty state:
+```css
+.empty { text-align: center; padding: 2.5rem 1rem; color: var(--muted); }
+.empty svg { margin-bottom: .75rem; }
+.empty h3 { font-family: var(--font-display); color: var(--ink); font-size: 1.3rem; margin: 0 0 .35rem; }
+```
+
+Toast:
+```css
+.toast-region { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); display: grid; gap: .5rem; z-index: 50; width: min(92vw, 380px); }
+.toast {
+  display: flex; align-items: center; gap: .6rem;
+  background: var(--pine-deep); color: #f4f6ef;
+  border: 1px solid rgba(255,255,255,.15);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px; padding: .7rem .9rem;
+  box-shadow: 0 8px 24px rgba(15,38,31,.35);
+  opacity: 0; transform: translateY(10px);
+  transition: opacity .25s ease, transform .25s ease;
+  font-size: .9rem;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error { border-left-color: var(--danger); }
+.toast .toast-action { margin-left: auto; background: var(--accent); color: var(--accent-ink); border: none; font-weight: 700; border-radius: 7px; padding: .35rem .7rem; cursor: pointer; }
+```
+
+sr-only utility.
+
+Reduced motion:
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+```
+
+Now the full JS. Let me write it out fully and carefully, checking for bugs.
+
+```js
+(() => {
+  'use strict';
+
+  const STORAGE_KEY = 'homekeeper.inventory.v1';
+  const CATEGORIES = ['Food', 'Tools', 'Documents', 'Electronics', 'Cleaning', 'Other'];
+  const LOW_STOCK_MAX = 2;
+  const ROOM_COLORS = ['#2f7d5b', '#3f6aa0', '#8a5aa0', '#0f7f8b', '#c07a1f', '#c2543a', '#5f7d3f', '#a05a7a'];
+
+  const state = {
+    rooms: [],
+    items: [],
+    editingItemId: null,
+    renamingRoomId: null,
+    pendingDelete: null, // {item, index}
+  };
+
+  const els = {};
+  ['demoBtn','exportBtn','importBtn','importFile','statItems','statUnits','statLow','lowStat',
+   'roomForm','roomNameInput','roomList','roomEmpty','roomCount',
+   'itemForm','itemFormTitle','itemName','itemQty','itemCategory','itemRoom','itemNotes','itemSubmitBtn','itemCancelBtn',
+   'searchInput','roomFilter','categoryFilter','clearFilters','resultLine','itemList','itemCount','emptyState','emptyTitle','emptyText','emptyAction','toastRegion']
+  .forEach(id => { els[id] = document.getElementById(id); });
+```
+
+Hmm, the empty state has dynamic content; let me build it in JS or keep it static with two variants. Simpler: one empty state container; JS sets the innerHTML based on the reason (no items vs no matches). Let me do that.
+
+```js
+  function makeId() {
+    if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, ch => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+    ));
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ rooms: state.rooms, items: state.items }));
+    } catch (err) {
+      showToast('Could not save — storage may be full or blocked.', { type: 'error' });
+    }
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const data = normalizeData(JSON.parse(raw));
+      state.rooms = data.rooms;
+      state.items = data.items;
+    } catch (err) {
+      state.rooms = []; state.items = [];
+    }
+  }
+```
+
+normalizeData as planned. Note: the saved format uses {rooms, items} — matches.
+
+```js
+  function normalizeData(raw) {
+    if (!raw || typeof raw !== 'object') throw new Error('Invalid data');
+    const roomsRaw = Array.isArray(raw.rooms) ? raw.rooms : [];
+    const itemsRaw = Array.isArray(raw.items) ? raw.items : [];
+
+    const rooms = [];
+    const roomByName = new Map();
+    roomsRaw.forEach(entry => {
+      if (!entry || typeof entry !== 'object') return;
+      const name = typeof entry.name === 'string' ? entry.name.trim() : '';
+      if (!name) return;
+      const existing = roomByName.get(name.toLowerCase());
+      if (existing) return;
+      const room = {
+        id: typeof entry.id === 'string' && entry.id ? entry.id : makeId(),
+        name,
+        color: ROOM_COLORS[rooms.length % ROOM_COLORS.length],
+      };
+      rooms.push(room);
+      roomByName.set(name.toLowerCase(), room);
+    });
+
+    const items = [];
+    itemsRaw.forEach(entry => {
+      if (!entry || typeof entry !== 'object') return;
+      const name = typeof entry.name === 'string' ? entry.name.trim() : '';
+      if (!name) return;
+      let qty = Number(entry.qty !== undefined ? entry.qty : entry.quantity);
+      if (!Number.isFinite(qty) || qty < 0) qty = 0;
+      qty = Math.floor(qty);
+      const category = CATEGORIES.includes(entry.category) ? entry.category : 'Other';
+      const notes = typeof entry.notes === 'string' ? entry.notes.trim() : '';
+
+      let room = null;
+      if (typeof entry.roomId === 'string' && rooms.some(r => r.id === entry.roomId)) {
+        room = rooms.find(r => r.id === entry.roomId);
+      } else if (typeof entry.room === 'string') {
+        room = roomByName.get(entry.room.trim().toLowerCase()) || null;
+      }
+      if (!room) {
+        if (rooms.length === 0) {
+          room = { id: makeId(), name: 'Unsorted', color: ROOM_COLORS[0] };
+          rooms.push(room);
+          roomByName.set('unsorted', room);
+        } else {
+          room = rooms[0];
+        }
+      }
+
+      items.push({ id: typeof entry.id === 'string' && entry.id ? entry.id : makeId(), name, qty, category, roomId: room.id, notes });
+    });
+
+    return { rooms, items };
+  }
+```
+
+Wait: if rooms.length === 0 and there are multiple items, the first item creates "Unsorted", subsequent items find rooms.length > 0 → rooms[0] = Unsorted. Good.
+
+Edge: entry.roomId references a room that exists in roomsRaw but was skipped (invalid name)? rooms.some checks the final rooms list. OK.
+
+Rendering:
+
+```js
+  function renderAll() {
+    renderRooms();
+    renderItems();
+    renderStats();
+    syncRoomSelects();
+  }
+
+  function renderStats() {
+    const totalUnits = state.items.reduce((sum, item) => sum + item.qty, 0);
+    const lowCount = state.items.filter(item => item.qty <= LOW_STOCK_MAX).length;
+    els.statItems.textContent = state.items.length;
+    els.statUnits.textContent = totalUnits;
+    els.statLow.textContent = lowCount;
+    els.lowStat.classList.toggle('is-alert', lowCount > 0);
+  }
+
+  function renderRooms() {
+    els.roomCount.textContent = state.rooms.length;
+    els.roomEmpty.hidden = state.rooms.length > 0;
+    els.roomList.innerHTML = state.rooms.map(room => {
+      const count = state.items.filter(i => i.roomId === room.id).length;
+      if (room.id === state.renamingRoomId) {
+        return `
+          <li class="room-row renaming">
+            <span class="room-dot" style="background:${room.color}"></span>
+            <input class="room-rename-input" type="text" value="${escapeHtml(room.name)}" aria-label="Room name" autocomplete="off">
+            <button type="button" class="icon-btn" data-room-action="save" aria-label="Save room name" title="Save">✓</button>
+            <button type="button" class="icon-btn" data-room-action="cancel" aria-label="Cancel rename" title="Cancel">✕</button>
+          </li>`;
+      }
+      return `
+        <li class="room-row">
+          <span class="room-dot" style="background:${room.color}"></span>
+          <span class="room-name" title="${escapeHtml(room.name)}">${escapeHtml(room.name)}</span>
+          <span class="room-count">${count}</span>
+          <button type="button" class="icon-btn" data-room-action="rename" data-id="${room.id}" aria-label="Rename ${escapeHtml(room.name)}" title="Rename">${pencilSvg}</button>
+          <button type="button" class="icon-btn icon-danger" data-room-action="delete" data-id="${room.id}" aria-label="Delete ${escapeHtml(room.name)}" title="Delete">${trashSvg}</button>
+        </li>`;
+    }).join('');
+    if (state.renamingRoomId) {
+      const input = els.roomList.querySelector('.room-rename-input');
+      if (input) { input.focus(); input.select(); }
+    }
+  }
+```
+
+Use inline SVG strings for pencil/trash. Define constants:
+
+```js
+  const ICONS = {
+    pencil: '<svg ...>...</svg>',
+    trash: '<svg ...>...</svg>',
+    search: ...,
+    box: ...,
+    check: ...,
+  };
+```
+
+SVGs (24 viewBox, stroke currentColor, stroke-width 2, fill none, round caps):
+
+pencil: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`
+
+trash: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>`
+
+search: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`
+
+check: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12 5 5L20 6"/></svg>`
+
+For the rename save/cancel buttons, use text ✓/✕ or SVGs. Let me use SVG check and an x icon:
+x: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>`
+
+renderItems:
+
+```js
+  function getVisibleItems() {
+    const query = els.searchInput.value.trim().toLowerCase();
+    const roomFilter = els.roomFilter.value;
+    const categoryFilter = els.categoryFilter.value;
+    return state.items
+      .filter(item =>
+        (!roomFilter || item.roomId === roomFilter) &&
+        (!categoryFilter || item.category === categoryFilter) &&
+        (!query || item.name.toLowerCase().includes(query) || item.notes.toLowerCase().includes(query)))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  }
+
+  function renderItems() {
+    const visible = getVisibleItems();
+    els.itemCount.textContent = state.items.length;
+    els.resultLine.textContent = `Showing ${visible.length} of ${state.items.length} item${state.items.length === 1 ? '' : 's'}`;
+    const filtersActive = els.searchInput.value.trim() !== '' || els.roomFilter.value !== '' || els.categoryFilter.value !== '';
+    els.clearFilters.hidden = !filtersActive;
+
+    if (visible.length === 0) {
+      els.itemList.innerHTML = '';
+      els.emptyState.hidden = false;
+      if (state.items.length === 0) {
+        els.emptyState.innerHTML = `
+          <svg ...big box...></svg>
+          <h3>Your shelves are empty</h3>
+          <p>Add your first item above, or start with some sample data.</p>
+          <button type="button" class="btn btn-primary" id="emptyDemoBtn">Load demo data</button>`;
+        const b = document.getElementById('emptyDemoBtn');
+        if (b) b.addEventListener('click', loadDemoData);
+      } else {
+        els.emptyState.innerHTML = `
+          <h3>No items match</h3>
+          <p>Try a different search or clear the filters.</p>
+          <button type="button" class="btn btn-quiet" id="emptyClearBtn">Clear filters</button>`;
+        document.getElementById('emptyClearBtn').addEventListener('click', clearFilters);
+      }
+      return;
+    }
+    els.emptyState.hidden = true;
+    els.itemList.innerHTML = visible.map(item => renderItemCard(item)).join('');
+  }
+
+  function renderItemCard(item) {
+    const room = state.rooms.find(r => r.id === item.roomId);
+    const isLow = item.qty <= LOW_STOCK_MAX;
+    const badge = item.qty === 0 ? 'Out of stock' : 'Low stock';
+    return `
+      <li class="item-card cat-${item.category}${isLow ? ' low' : ''}" data-id="${item.id}">
+        <div class="item-main">
+          <div class="item-title-row">
+            <h3 class="item-name">${escapeHtml(item.name)}</h3>
+            ${isLow ? `<span class="badge-low">${badge}</span>` : ''}
+          </div>
+          <div class="item-meta">
+            <span class="chip chip-cat">${item.category}</span>
+            <span class="chip chip-room" style="--room-color:${room ? room.color : 'var(--muted)'}">${room ? escapeHtml(room.name) : 'No room'}</span>
+          </div>
+          ${item.notes ? `<p class="item-notes">${escapeHtml(item.notes)}</p>` : ''}
+        </div>
+        <div class="item-side">
+          <div class="qty-stepper" role="group" aria-label="Quantity for ${escapeHtml(item.name)}">
+            <button type="button" class="qty-btn" data-action="dec" aria-label="Decrease quantity of ${escapeHtml(item.name)}">−</button>
+            <span class="qty-value">${item.qty}</span>
+            <button type="button" class="qty-btn" data-action="inc" aria-label="Increase quantity of ${escapeHtml(item.name)}">+</button>
+          </div>
+          <div class="item-actions">
+            <button type="button" class="icon-btn" data-action="edit" aria-label="Edit ${escapeHtml(item.name)}" title="Edit">${ICONS.pencil}</button>
+            <button type="button" class="icon-btn icon-danger" data-action="delete" aria-label="Delete ${escapeHtml(item.name)}" title="Delete">${ICONS.trash}</button>
+          </div>
+        </div>
+      </li>`;
+  }
+```
+
+Note: item.notes is always a string (normalized/created with ''). Good — item.notes.toLowerCase() is safe.
+
+syncRoomSelects: rebuild the options for the form's room select and the room filter select, preserving values.
+
+```js
+  function syncRoomSelects() {
+    const formValue = els.itemRoom.value;
+    const filterValue = els.roomFilter.value;
+    els.itemRoom.innerHTML = state.rooms.length
+      ? state.rooms.map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('')
+      : '<option value="">Add a room first…</option>';
+    els.roomFilter.innerHTML = '<option value="">All rooms</option>' +
+      state.rooms.map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
+    if (state.rooms.some(r => r.id === formValue)) els.itemRoom.value = formValue;
+    if (state.rooms.some(r => r.id === filterValue)) els.roomFilter.value = filterValue;
+  }
+```
+
+Category select is built once in init:
+
+```js
+  els.itemCategory.innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+  els.categoryFilter.innerHTML = '<option value="">All categories</option>' + CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+```
+
+Actions:
+
+```js
+  function handleRoomSubmit(event) {
+    event.preventDefault();
+    const name = els.roomNameInput.value.trim();
+    if (!name) { showToast('Give the room a name first.', { type: 'error' }); els.roomNameInput.focus(); return; }
+    if (state.rooms.some(r => r.name.toLowerCase() === name.toLowerCase())) {
+      showToast(`A room called “${name}” already exists.`, { type: 'error' });
+      els.roomNameInput.focus(); return;
+    }
+    const room = { id: makeId(), name, color: ROOM_COLORS[state.rooms.length % ROOM_COLORS.length] };
+    state.rooms.push(room);
+    saveState();
+    renderAll();
+    showToast(`Room “${name}” added.`);
+    els.roomNameInput.value = '';
+    els.roomNameInput.focus();
+  }
+```
+
+Room list delegation:
+
+```js
+  els.roomList.addEventListener('click', event => {
+    const button = event.target.closest('[data-room-action]');
+    if (!button) return;
+    const action = button.dataset.roomAction;
+    if (action === 'rename') startRoomRename(button.dataset.id);
+    else if (action === 'delete') deleteRoom(button.dataset.id);
+    else if (action === 'save') commitRoomRename();
+    else if (action === 'cancel') cancelRoomRename();
+  });
+
+  els.roomList.addEventListener('keydown', event => {
+    if (event.target.classList.contains('room-rename-input')) {
+      if (event.key === 'Enter') { event.preventDefault(); commitRoomRename(); }
+      else if (event.key === 'Escape') cancelRoomRename();
+    }
+  });
+
+  els.roomList.addEventListener('focusout', event => {
+    if (event.target.classList.contains('room-rename-input') && state.renamingRoomId) {
+      // commit if there's a value, otherwise cancel
+      const value = event.target.value.trim();
+      if (value) commitRoomRename(); else cancelRoomRename();
+    }
+  });
+```
+
+Hmm, focusout when clicking the save button: focusout fires (target = input), then the click handler commits. commitRoomRename must be idempotent: after the first commit, state.renamingRoomId = null, so the second call is a no-op. Let me guard:
+
+```js
+  function startRoomRename(roomId) {
+    if (!state.rooms.some(r => r.id === roomId)) return;
+    state.renamingRoomId = roomId;
+    renderRooms();
+  }
+
+  function commitRoomRename() {
+    if (!state.renamingRoomId) return;
+    const input = els.roomList.querySelector('.room-rename-input');
+    const room = state.rooms.find(r => r.id === state.renamingRoomId);
+    state.renamingRoomId = null;
+    if (!room || !input) { renderRooms(); return; }
+    const name = input.value.trim();
+    if (!name) { showToast('Room name cannot be empty.', { type: 'error' }); renderRooms(); return; }
+    if (state.rooms.some(r => r.id !== room.id && r.name.toLowerCase() === name.toLowerCase())) {
+      showToast(`A room called “${name}” already exists.`, { type: 'error' });
+      renderRooms(); return;
+    }
+    room.name = name;
+    saveState();
+    renderAll();
+    showToast(`Room renamed to “${name}”.`);
+  }
+
+  function cancelRoomRename() {
+    if (!state.renamingRoomId) return;
+    state.renamingRoomId = null;
+    renderRooms();
+  }
+```
+
+Wait, focusout → commitRoomRename sets renamingRoomId to null and re-renders; then the save button's click event... after re-render, the button is a new node; the click event's target was the old button — the event has already been dispatched, and the listener runs on the (delegated) list, and event.target.closest still works on the detached node. But commitRoomRename is called twice: once from focusout, once from click. The second time: renamingRoomId is null → no-op. Good.
+
+But there's a subtle issue: focusout fires when clicking the save button — the input's value is committed. Then the click handler calls commitRoomRename again → no-op.
+
+Escape: cancelRoomRename re-renders; no problem.
+
+deleteRoom:
+
+```js
+  function deleteRoom(roomId) {
+    const room = state.rooms.find(r => r.id === roomId);
+    if (!room) return;
+    const itemCount = state.items.filter(i => i.roomId === roomId).length;
+    if (itemCount > 0) {
+      const ok = window.confirm(`Delete “${room.name}” and its ${itemCount} item${itemCount === 1 ? '' : 's'}? This cannot be undone.`);
+      if (!ok) return;
+    }
+    state.rooms = state.rooms.filter(r => r.id !== roomId);
+    state.items = state.items.filter(i => i.roomId !== roomId);
+    if (state.editingItemId) { /* the item being edited might have been deleted */ resetItemForm(); }
+    saveState();
+    renderAll();
+    showToast(`Room “${room.name}” deleted.`);
+  }
+```
+
+Item form:
+
+```js
+  function resetItemForm() {
+    state.editingItemId = null;
+    els.itemForm.reset();
+    els.itemQty.value = '1';
+    els.itemFormTitle.textContent = 'Add an item';
+    els.itemSubmitBtn.textContent = 'Add item';
+    els.itemCancelBtn.hidden = true;
+    els.itemForm.classList.remove('editing');
+    syncRoomSelects();
+  }
+
+  function startItemEdit(itemId) {
+    const item = state.items.find(i => i.id === itemId);
+    if (!item) return;
+    state.editingItemId = itemId;
+    els.itemName.value = item.name;
+    els.itemQty.value = String(item.qty);
+    els.itemCategory.value = item.category;
+    els.itemRoom.value = item.roomId;
+    els.itemNotes.value = item.notes;
+    els.itemFormTitle.textContent = `Edit “${item.name}”`;
+    els.itemSubmitBtn.textContent = 'Save changes';
+    els.itemCancelBtn.hidden = false;
+    els.itemForm.classList.add('editing');
+    els.itemForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    els.itemName.focus({ preventScroll: true });
+  }
+```
+
+Note: form.reset() resets to the default values in the HTML — the qty default is "1" in the markup, so reset is fine; but I set it explicitly anyway.
+
+handleItemSubmit as planned. After save:
+
+```js
+    let savedId;
+    if (state.editingItemId) {
+      const item = state.items.find(i => i.id === state.editingItemId);
+      if (item) {
+        item.name = name; item.qty = qty; item.category = category; item.roomId = roomId; item.notes = notes;
+        savedId = item.id;
+        showToast(`“${name}” updated.`);
+      }
+    } else {
+      const item = { id: makeId(), name, qty, category, roomId, notes };
+      state.items.push(item);
+      savedId = item.id;
+      showToast(`“${name}” added to ${roomName}.`);
+    }
+    saveState();
+    resetItemForm();
+    renderAll();
+    flashItem(savedId);
+```
+
+flashItem:
+
+```js
+  function flashItem(itemId) {
+    const card = els.itemList.querySelector(`.item-card[data-id="${itemId}"]`);
+    if (!card) return;
+    card.classList.add('flash');
+    card.addEventListener('animationend', () => card.classList.remove('flash'), { once: true });
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+```
+
+Note: if filters are hiding the item (e.g., editing while a filter is active), the card might not exist — that's fine, no flash.
+
+Delete with undo:
+
+```js
+  function deleteItem(itemId) {
+    const index = state.items.findIndex(i => i.id === itemId);
+    if (index === -1) return;
+    const [item] = state.items.splice(index, 1);
+    if (state.editingItemId === itemId) resetItemForm();
+    saveState();
+    renderAll();
+    showToast(`“${item.name}” deleted.`, {
+      type: 'warn',
+      actionLabel: 'Undo',
+      onAction: () => {
+        state.items.splice(Math.min(index, state.items.length), 0, item);
+        saveState();
+        renderAll();
+        flashItem(item.id);
+      },
+    });
+  }
+```
+
+Toast with action: the toast persists longer (6s).
+
+Quantity change:
+
+```js
+  function changeQuantity(itemId, delta) {
+    const item = state.items.find(i => i.id === itemId);
+    if (!item) return;
+    item.qty = Math.max(0, item.qty + delta);
+    saveState();
+    renderItems();
+    renderStats();
+    const card = els.itemList.querySelector(`.item-card[data-id="${itemId}"]`);
+    if (card) {
+      const value = card.querySelector('.qty-value');
+      if (value) { value.classList.add('bump'); value.addEventListener('animationend', () => value.classList.remove('bump'), { once: true }); }
+    }
+  }
+```
+
+Hmm, renderItems re-renders the whole list; the bump class is added after the render. OK.
+
+Item list delegation:
+
+```js
+  els.itemList.addEventListener('click', event => {
+    const button = event.target.closest('[data-action]');
+    if (!button) return;
+    const card = button.closest('.item-card');
+    if (!card) return;
+    const itemId = card.dataset.id;
+    const action = button.dataset.action;
+    if (action === 'inc') changeQuantity(itemId, 1);
+    else if (action === 'dec') changeQuantity(itemId, -1);
+    else if (action === 'edit') startItemEdit(itemId);
+    else if (action === 'delete') deleteItemWithAnimation(itemId, button);
+  });
+```
+
+Delete animation:
+
+```js
+  function deleteItemWithAnimation(itemId, button) {
+    const card = button.closest('.item-card');
+    if (!card) { deleteItem(itemId); return; }
+    card.classList.add('removing');
+    window.setTimeout(() => deleteItem(itemId), 180);
+  }
+```
+
+But deleteItem re-renders; the card is already removed. Good.
+
+Search/filter events:
+
+```js
+  els.searchInput.addEventListener('input', renderItems);
+  els.roomFilter.addEventListener('change', renderItems);
+  els.categoryFilter.addEventListener('change', renderItems);
+  els.clearFilters.addEventListener('click', clearFilters);
+
+  function clearFilters() {
+    els.searchInput.value = '';
+    els.roomFilter.value = '';
+    els.categoryFilter.value = '';
+    renderItems();
+  }
+```
+
+Also, Escape in the search clears it:
+
+```js
+  els.searchInput.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && els.searchInput.value) {
+      els.searchInput.value = '';
+      renderItems();
+    }
+  });
+```
+
+Demo:
+
+```js
+  const DEMO_ROOMS = ['Kitchen', 'Garage', 'Study', 'Bathroom'];
+  const DEMO_ITEMS = [ ... as above with room names ... ];
+
+  function loadDemoData() {
+    if (state.items.length || state.rooms.length) {
+      const ok = window.confirm('Replace your current data with demo data?');
+      if (!ok) return;
+    }
+    const rooms = DEMO_ROOMS.map(name => ({ id: makeId(), name, color: ROOM_COLORS[rooms.length % ROOM_COLORS.length] }));
+```
+
+Bug: rooms.length during map — use the index: `ROOM_COLORS[i % ROOM_COLORS.length]`. Let me use forEach or map with an index.
+
+```js
+    const rooms = DEMO_ROOMS.map((name, i) => ({ id: makeId(), name, color: ROOM_COLORS[i % ROOM_COLORS.length] }));
+    const roomIds = new Map(rooms.map(r => [r.name, r.id]));
+    const items = DEMO_ITEMS.map(d => ({ id: makeId(), name: d.name, qty: d.qty, category: d.category, roomId: roomIds.get(d.room), notes: d.notes || '' }));
+    state.rooms = rooms;
+    state.items = items;
+    resetItemForm();
+    clearFilters();
+    saveState();
+    renderAll();
+    showToast(`Loaded demo data: ${items.length} items in ${rooms.length} rooms.`);
+  }
+```
+
+clearFilters calls renderItems — then renderAll re-renders; no problem.
+
+Export/import as planned.
+
+Toast:
+
+```js
+  let toastCounter = 0;
+  function showToast(message, options = {}) {
+    const { type = 'ok', actionLabel, onAction } = options;
+    const toast = document.createElement('div');
+    toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    const icon = document.createElement('span');
+    icon.className = 'toast-icon';
+    icon.innerHTML = type === 'error' ? ICONS.x : ICONS.check;
+    const text = document.createElement('span');
+    text.className = 'toast-text';
+    text.textContent = message;
+    toast.append(icon, text);
+    if (actionLabel) {
+      const action = document.createElement('button');
+      action.type = 'button';
+      action.className = 'toast-action';
+      action.textContent = actionLabel;
+      action.addEventListener('click', () => { onAction && onAction(); dismiss(); });
+      toast.append(action);
+    }
+    els.toastRegion.append(toast);
+    requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
+    const lifetime = actionLabel ? 6000 : 3200;
+    const dismiss = () => {
+      toast.classList.remove('show');
+      toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+      window.setTimeout(() => toast.remove(), 400); // safety
+    };
+    window.setTimeout(dismiss, lifetime);
+  }
+```
+
+Note: dismiss is referenced inside the action listener before it's defined — function hoisting: `const dismiss` is defined after the listener is added, but the listener runs later, so it's fine (closure). But `dismiss` is a const declared later in the same scope — the listener's callback references it; by the time the callback runs, it's initialized. OK.
+
+The toast region has aria-live="polite" — adding/removing children is announced. Good.
+
+Init:
+
+```js
+  function init() {
+    // build static selects
+    els.itemCategory.innerHTML = ...;
+    els.categoryFilter.innerHTML = ...;
+    loadState();
+    renderAll();
+    // wire events...
+  }
+  init();
+```
+
+Wire all events in init or at the top level after els are defined. Let me wire them in init.
+
+Item form submit + Escape to cancel edit:
+
+```js
+  els.itemForm.addEventListener('submit', handleItemSubmit);
+  els.itemCancelBtn.addEventListener('click', resetItemForm);
+  els.itemForm.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && state.editingItemId) resetItemForm();
+  });
+```
+
+Header buttons:
+
+```js
+  els.demoBtn.addEventListener('click', loadDemoData);
+  els.exportBtn.addEventListener('click', exportData);
+  els.importBtn.addEventListener('click', () => els.importFile.click());
+  els.importFile.addEventListener('change', handleImportFile);
+```
+
+exportData:
+
+```js
+  function exportData() {
+    if (!state.items.length && !state.rooms.length) {
+      showToast('Nothing to export yet — add some items first.', { type: 'error' });
+      return;
+    }
+    const payload = { app: 'homekeeper', version: 1, exportedAt: new Date().toISOString(), rooms: state.rooms, items: state.items };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    anchor.href = url;
+    anchor.download = `home-inventory-${stamp}.json`;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('Inventory exported as JSON.');
+  }
+```
+
+handleImportFile:
+
+```js
+  function handleImportFile() {
+    const file = els.importFile.files && els.importFile.files[0];
+    els.importFile.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = normalizeData(JSON.parse(String(reader.result)));
+        state.rooms = data.rooms;
+        state.items = data.items;
+        resetItemForm();
+        clearFilters();
+        saveState();
+        renderAll();
+        showToast(`Imported ${data.items.length} item${data.items.length === 1 ? '' : 's'} across ${data.rooms.length} room${data.rooms.length === 1 ? '' : 's'}.`);
+      } catch (err) {
+        showToast('Import failed — that file does not look like a valid inventory export.', { type: 'error' });
+      }
+    };
+    reader.onerror = () => showToast('Could not read the selected file.', { type: 'error' });
+    reader.readAsText(file);
+  }
+```
+
+resetItemForm calls syncRoomSelects — but state.rooms is already updated before that. Order: set state, resetItemForm (syncs selects with the new rooms), clearFilters, save, renderAll. Good.
+
+One more detail: the item form's room select when editing — the item's roomId is set; syncRoomSelects preserves it.
+
+Now the empty state SVG: a simple open box with a question mark? Let me draw a crate:
+
+```svg
+<svg viewBox="0 0 96 96" width="84" height="84" aria-hidden="true">
+  <rect x="14" y="34" width="68" height="46" rx="6" fill="#e8ecdf" stroke="#9aa79b" stroke-width="2.5"/>
+  <path d="M14 44 L48 58 L82 44" fill="none" stroke="#9aa79b" stroke-width="2.5"/>  <!-- slats -->
+  <rect x="38" y="18" width="20" height="16" rx="3" fill="#e8a020" stroke="#9aa79b" stroke-width="2.5"/>
+  <path d="M48 26 v6 M45 29 l3 3 3-3" ... arrow?
+</svg>
+```
+
+Simpler: a box with a label and a dashed outline. Let me make it decent:
+
+```svg
+<svg viewBox="0 0 96 96" width="88" height="88" aria-hidden="true" fill="none">
+  <rect x="16" y="36" width="64" height="44" rx="6" fill="#eef1e6" stroke="#8fa08f" stroke-width="3"/>
+  <path d="M16 50h64" stroke="#8fa08f" stroke-width="3"/>
+  <rect x="36" y="46" width="24" height="14" rx="3" fill="#fff" stroke="#8fa08f" stroke-width="3"/>
+  <path d="M30 36 48 20l18 16" stroke="#c9860f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="78" cy="24" r="10" fill="#e8a020"/>
+  <path d="M78 19v7m0 3.5v.5" stroke="#33240a" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
+```
+
+The "?" in the circle. OK, cute.
+
+Now let me double-check "no horizontal scroll": body overflow-x hidden? Better to make sure the content fits: max-width, flex-wrap, grid minmax. Add `overflow-x: hidden` on body as a safety? It can hide real problems, but it's a safety net. Let me add `html, body { overflow-x: hidden; }`? Hmm, that can break position: sticky, but I'm not using sticky. Actually, the toast region uses fixed with translateX(-50%) and width min(92vw, 380px) — no overflow. Let me add overflow-x: clip on body as a safety. `overflow-x: clip` is well supported now; fallback hidden. Let me just use hidden.
+
+Also `min-width: 0` on grid children to prevent overflow from long content; overflow-wrap: anywhere on names/notes.
+
+Responsive:
+- ≤820px: single column; rooms panel first.
+- Header: wrap; on small screens, actions wrap below the brand.
+- Item card: on narrow screens, stack the side below the main:
+```css
+@media (max-width: 560px) {
+  .item-card { flex-direction: column; }
+  .item-side { width: 100%; justify-content: space-between; }
+}
+```
+.item-side is normally flex column align-end gap. Let me define:
+```css
+.item-side { display: flex; flex-direction: column; align-items: flex-end; gap: .5rem; flex: none; }
+```
+On mobile, row: stepper left, actions right.
+
+Result line: font-size .8rem, color muted, monospace? Let me use monospace for the numbers — the whole line is fine in small caps.
+
+Panel head: flex, baseline, gap; h2 font-display 1.3rem; count pill.
+
+Also add a subtle top accent to the panel? Maybe a 3px top border in pine on the rooms panel? Keep it clean.
+
+Focus-visible global:
+```css
+:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 2px; }
+```
+But inputs have their own focus style; the outline would double up. Let me scope: `:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 2px; }` and for inputs `input:focus, select:focus, textarea:focus { outline: none; ... }` — but that removes the keyboard focus indicator on inputs, replaced by the box-shadow ring, which is visible. Acceptable: the ring is the indicator. OK.
+
+Buttons: keep the global focus-visible outline.
+
+Selection color: `::selection { background: rgba(232,160,32,.4); }` nice touch.
+
+Scrollbar styling? Optional, skip or minimal.
+
+Now, the summary bar stats styling:
+
+```css
+.summary-bar { border-top: 1px solid rgba(255,255,255,.14); background: rgba(0,0,0,.18); }
+.summary-bar .header-inner { display: flex; gap: 1.5rem; padding-top: .55rem; padding-bottom: .55rem; flex-wrap: wrap; }
+.stat { font-size: .8rem; letter-spacing: .05em; text-transform: uppercase; color: rgba(244,246,239,.75); display: inline-flex; gap: .45rem; align-items: center; }
+.stat strong { font-family: var(--font-mono); font-size: 1rem; color: #fff; }
+.stat-low.is-alert strong { color: var(--accent); }
+.stat-low.is-alert { color: var(--accent); }
+```
+
+Maybe add a small dot before the low stat.
+
+Header inner:
+```css
+.header-inner { max-width: 1100px; margin: 0 auto; padding: 1.1rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+```
+
+Brand:
+```css
+.brand { display: flex; align-items: center; gap: .8rem; }
+.brand h1 { font-family: var(--font-display); font-size: clamp(1.4rem, 2.6vw, 1.9rem); margin: 0; letter-spacing: .01em; line-height: 1.1; }
+.tagline { margin: .15rem 0 0; font-size: .72rem; text-transform: uppercase; letter-spacing: .18em; color: rgba(244,246,239,.65); }
+```
+
+Logo container:
+```css
+.brand-mark { width: 46px; height: 46px; flex: none; display: grid; place-items: center; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2); border-radius: 12px; }
+```
+
+Header actions: flex wrap gap .5rem.
+
+Now, the "Load demo data" button in the header — maybe make it stand out: mustard outline? Let me make the demo button an accent style on the dark header:
+```css
+.btn-accent { background: var(--accent); color: var(--accent-ink); border-color: rgba(0,0,0,.25); font-weight: 700; }
+.btn-accent:hover { background: #f2b13a; transform: translateY(-1px); }
+```
+
+Export/Import are ghost.
+
+Order: Load demo (accent), Export JSON (ghost), Import JSON (ghost).
+
+Now let me assemble the full HTML. Also add a <noscript> note.
+
+Title: "Homekeeper · Household Inventory".
+
+Let me also think about the item form layout on desktop: grid-template-columns: 2fr 1fr 1fr 1fr → name spans 2, qty, category, room; notes full width. On tablet (≤640): 2 columns: name full width, qty+category, room full width? Let me do:
+```css
+@media (max-width: 680px) {
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .field-name, .field-notes { grid-column: 1 / -1; }
+}
+@media (max-width: 430px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+```
+Room field on tablet: 1 column of 2 → room takes the first column of the second row, leaving a gap; acceptable. Or make room full width too? Then qty+category share a row. Let me make .field-room also full width on tablet? Then qty and category share a row. That's cleaner:
+```css
+@media (max-width: 680px) {
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .field-name, .field-room, .field-notes { grid-column: 1 / -1; }
+}
+```
+
+Form actions: flex gap, margin-top .8rem.
+
+Now, the item form heading h3: font-display, 1.05rem, margin-bottom .7rem.
+
+Panel head h2 with a small overline? Let me add a small overline label style: h2 font-display 1.35rem.
+
+Count pill:
+```css
+.count-pill { font-family: var(--font-mono); font-size: .75rem; font-weight: 700; background: var(--pine); color: #fff; border-radius: 999px; padding: .15rem .6rem; }
+```
+
+Room form:
+```css
+.room-form { display: flex; gap: .5rem; margin-top: .8rem; }
+.room-form input { flex: 1; min-width: 0; }
+.btn-sm { padding: .45rem .8rem; }
+```
+
+Hint:
+```css
+.hint { color: var(--muted); font-size: .85rem; margin: .8rem 0 0; }
+```
+
+Room rename input: flex:1 min-width:0.
+
+Now, the item card title row: flex, gap .5rem, align center, flex-wrap.
+
+item-meta: flex gap .4rem, margin-top .4rem, flex-wrap.
+
+item-notes: margin .45rem 0 0.
+
+Let me also handle the "no rooms" case for the item form: the room select shows "Add a room first…" (value ""). On submit, toast error. Good.
+
+Potential issue: `els.itemRoom.value = item.roomId` when the option doesn't exist (shouldn't happen since syncRoomSelects runs first). In startItemEdit, the options are already synced (renderAll ran). OK.
+
+Another detail: after adding a room, the form's room select auto-updates (syncRoomSelects in renderAll). Good.
+
+Now, the result line's aria-live: it changes on every keystroke — could be noisy for screen readers. Let me use aria-live="polite" but it updates frequently... maybe better to not have aria-live on the result line and instead rely on the list. Actually, a polite live region that updates on every keystroke is annoying. Let me remove aria-live from the result line. Keep aria-live on the toast region.
+
+Also add `autocomplete="off"` on the search input.
+
+Number input: hide the spinners? Keep the default spinners — they're useful. Actually, the default number spinners are fine.
+
+Let me double
