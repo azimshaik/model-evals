@@ -42,6 +42,30 @@ decode speed. And with thinking enabled, the dense 27B spent two full budgets re
 📊 Raw outputs, apps, reasoning transcripts: [`results/2026-09-19-frontier-friday/`](results/2026-09-19-frontier-friday/)
 🔧 Local harness (any OpenAI-compatible endpoint): [`harness/local/`](harness/local/)
 
+## Third run (2026-09-30): Frontier Friday, decision models
+
+Can a **typed-decision model** replace a chat-model call for decision-shaped sub-tasks (pass/fail,
+pick-one, score)? Same two tasks, three ways of deciding: a hosted decision model (Jev, TypeSafe
+System One), the 322M open-weight decision model from the 2026-09-20 local benchmark, and an LLM
+judge. Code labels come from **executing** every candidate against a 9-case test suite.
+
+| Pass | Task 1: is this a correct implementation? (20 items) | Task 2: is this an injection attempt? (16 items) | Median latency | Cost / decision |
+|---|---|---|---|---|
+| **Jev** (hosted, `noul`) | **20/20** | 15/16 | 239 ms | $0.000019 |
+| Jev (`choice`, native confidence) | **20/20** | 15/16 | 237 ms | $0.000021 |
+| 322M local (MLX) | 10/20 | 12/16 | **19 ms** | $0 |
+| LLM judge (deepseek-v4-flash) | 16/20 | **16/16** | 1,632 ms | $0.001024 |
+
+Whole run: **$0.0013**. The surprising part is not that the hosted model beat the local one — it is
+that **its confidence tracked its errors and the local model's did not**: Jev's single guard miss sat
+at the bottom of its range, while our earlier local run missed 4 of 8 probes with confidence staying
+high and **0 of 16 items escalated**. And with a 0.70 gate, deferring to the LLM *lowered* task-1
+accuracy from 1.00 to 0.95 at ~7× the cost: a gate only pays where the fallback is genuinely better.
+
+📄 Full write-up: [`articles/2026-09-30-frontier-friday-decision-models.md`](articles/2026-09-30-frontier-friday-decision-models.md)
+📊 Per-item audit trail, datasets, run log: [`results/2026-09-30-frontier-friday/`](results/2026-09-30-frontier-friday/)
+🔧 Harness: [`harness/jev_bench_2026_09_30.py`](harness/jev_bench_2026_09_30.py) — `export JEV_API_KEY=...` then run
+
 ## Repo layout
 
 ```
