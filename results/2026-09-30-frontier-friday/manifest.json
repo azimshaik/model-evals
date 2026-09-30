@@ -1,0 +1,98 @@
+{
+  "run": "2026-09-30-frontier-friday",
+  "generated_utc": "2026-09-30T05:30:27Z",
+  "subject": "Jev (TypeSafe System One) as a typed-decision layer, vs a 322M open-weight local decision model and a cloud LLM judge",
+  "api": {
+    "endpoint": "https://api.typesafe.ai/v1/systemone",
+    "model_alias": "jev-latest",
+    "model_reported": "jev-1.13.0",
+    "auth": "Bearer (env JEV_API_KEY)",
+    "price_usd_per_1m_input_tokens": 0.042,
+    "price_note": "early-access rate card; output billed at $0"
+  },
+  "arms": {
+    "A_noul": "noul (yes/no probability) questions \u2014 phrasing identical to the local benchmark",
+    "B_choice": "the same judgments as a 2-option choice, which returns Jev's own confidence"
+  },
+  "escalation_threshold": 0.7,
+  "escalation_rule": "decide with Jev when confidence >= 0.70, otherwise defer to the LLM judge",
+  "confidence_note": "noul answers carry no confidence field (TypeSafe derives confidence only for Choice/Score); arm A derives it as 2*|p-0.5|",
+  "ground_truth": {
+    "judge_code": "each candidate executed against the 9-case ISBN-10 suite (labels are the verifier's verdict)",
+    "guard": "8 jailbreak/injection probes and 8 benign requests, labels by construction"
+  },
+  "baselines": {
+    "local_322m": "aac6fef/laya-multilingual-mlx (mmBERT-base, 322M, FP16) on Apple M1 Pro, MLX",
+    "llm_judge": "deepseek-v4-flash, temperature 0; verdicts reused from the recorded local run (identical prompts)"
+  },
+  "no_tuning": "no item was used to tune prompts for any of the three passes",
+  "results": {
+    "A_noul": {
+      "judge_code": {
+        "n": 20,
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "median_latency_ms": 239.1,
+        "cost_usd_per_item": 1.888e-05,
+        "input_tokens": 8991,
+        "output_tokens": 400,
+        "escalated_of_n": "4/20",
+        "effective_accuracy_at_0.70": 0.95,
+        "effective_cost_usd_per_item": 0.0001325,
+        "baseline_local_322m_accuracy": 0.5,
+        "baseline_llm_accuracy": 0.8,
+        "baseline_llm_median_latency_ms": 1632.5,
+        "baseline_llm_cost_usd_per_item": 0.00102443
+      },
+      "guard": {
+        "n": 16,
+        "accuracy": 0.9375,
+        "precision": 1.0,
+        "recall": 0.875,
+        "median_latency_ms": 232.9,
+        "cost_usd_per_item": 1.391e-05,
+        "input_tokens": 5298,
+        "output_tokens": 656,
+        "escalated_of_n": "4/16",
+        "effective_accuracy_at_0.70": 1.0,
+        "effective_cost_usd_per_item": 3.145e-05,
+        "baseline_local_322m_accuracy": 0.75,
+        "baseline_llm_accuracy": 1.0,
+        "baseline_llm_median_latency_ms": 1097.1,
+        "baseline_llm_cost_usd_per_item": 0.0002239
+      }
+    },
+    "B_choice": {
+      "judge_code": {
+        "n": 20,
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "median_latency_ms": 236.5,
+        "cost_usd_per_item": 2.119e-05,
+        "input_tokens": 10091,
+        "output_tokens": 640
+      },
+      "guard": {
+        "n": 16,
+        "accuracy": 0.9375,
+        "precision": 1.0,
+        "recall": 0.875,
+        "median_latency_ms": 237.8,
+        "cost_usd_per_item": 1.542e-05,
+        "input_tokens": 5874,
+        "output_tokens": 537
+      }
+    }
+  },
+  "cost": {
+    "total_usd": 0.001271,
+    "note": "36 items x 2 arms; fractions of a cent"
+  },
+  "artifacts": {
+    "jev_rows.json": "per-item audit trail (label, verdict, confidence, latency, tokens, cost)",
+    "jev_run_raw.log": "unedited run log",
+    "datasets/": "the exact items used, copied from the earlier local benchmark"
+  }
+}

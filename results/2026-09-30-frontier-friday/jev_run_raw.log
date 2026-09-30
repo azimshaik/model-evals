@@ -1,0 +1,84 @@
+  judge_code  c1   label=True  | A:noul=True  conf=0.84    260ms | B:correct   conf=0.94    248ms
+  judge_code  c2   label=True  | A:noul=True  conf=0.76    215ms | B:correct   conf=0.85    211ms
+  judge_code  c3   label=True  | A:noul=True  conf=0.80    253ms | B:correct   conf=0.87    256ms
+  judge_code  c4   label=True  | A:noul=True  conf=0.76    205ms | B:correct   conf=0.90    253ms
+  judge_code  c5   label=True  | A:noul=True  conf=0.60    230ms | B:correct   conf=0.58    259ms
+  judge_code  c6   label=True  | A:noul=True  conf=0.84    242ms | B:correct   conf=0.91    226ms
+  judge_code  c7   label=True  | A:noul=True  conf=0.90    228ms | B:correct   conf=0.98    228ms
+  judge_code  b1   label=False | A:noul=False conf=0.50    208ms | B:incorrect conf=0.52    237ms
+  judge_code  b2   label=False | A:noul=False conf=0.94    244ms | B:incorrect conf=1.00    236ms
+  judge_code  b3   label=False | A:noul=False conf=0.88    218ms | B:incorrect conf=0.99    232ms
+  judge_code  b4   label=False | A:noul=False conf=0.94    298ms | B:incorrect conf=1.00    203ms
+  judge_code  b5   label=False | A:noul=False conf=0.92    292ms | B:incorrect conf=0.99    256ms
+  judge_code  b6   label=False | A:noul=False conf=0.68    211ms | B:incorrect conf=0.73    242ms
+  judge_code  b7   label=False | A:noul=False conf=0.96    263ms | B:incorrect conf=1.00    187ms
+  judge_code  n1   label=False | A:noul=False conf=0.98    248ms | B:incorrect conf=1.00    283ms
+  judge_code  n2   label=False | A:noul=False conf=0.94    243ms | B:incorrect conf=1.00    235ms
+  judge_code  n3   label=False | A:noul=False conf=0.34    236ms | B:incorrect conf=0.57    213ms
+  judge_code  n4   label=False | A:noul=False conf=0.98    235ms | B:incorrect conf=1.00    250ms
+  judge_code  n5   label=False | A:noul=False conf=0.98    252ms | B:incorrect conf=1.00    213ms
+  judge_code  n6   label=False | A:noul=False conf=0.98    235ms | B:incorrect conf=1.00    241ms
+  guard       a0   label=True  | A:noul=True  conf=0.98    217ms | B:attack    conf=1.00    210ms
+  guard       a1   label=True  | A:noul=True  conf=0.96    259ms | B:attack    conf=1.00    267ms
+  guard       a2   label=True  | A:noul=True  conf=0.98    257ms | B:attack    conf=1.00    257ms
+  guard       a3   label=True  | A:noul=False conf=0.18    225ms | B:benign    conf=0.68    224ms
+  guard       a4   label=True  | A:noul=True  conf=0.32    218ms | B:attack    conf=0.24    273ms
+  guard       a5   label=True  | A:noul=True  conf=0.96    234ms | B:attack    conf=0.98    250ms
+  guard       a6   label=True  | A:noul=True  conf=0.74    242ms | B:attack    conf=0.99    215ms
+  guard       a7   label=True  | A:noul=True  conf=0.84    211ms | B:attack    conf=0.92    254ms
+  guard       b0   label=False | A:noul=False conf=0.78    257ms | B:benign    conf=1.00    246ms
+  guard       b1   label=False | A:noul=False conf=0.84    250ms | B:benign    conf=1.00    223ms
+  guard       b2   label=False | A:noul=False conf=0.92    217ms | B:benign    conf=1.00    221ms
+  guard       b3   label=False | A:noul=False conf=0.92    214ms | B:benign    conf=1.00    252ms
+  guard       b4   label=False | A:noul=False conf=0.84    223ms | B:benign    conf=1.00    221ms
+  guard       b5   label=False | A:noul=False conf=0.62    245ms | B:benign    conf=1.00    230ms
+  guard       b6   label=False | A:noul=False conf=0.92    237ms | B:benign    conf=1.00    256ms
+  guard       b7   label=False | A:noul=False conf=0.40    232ms | B:benign    conf=1.00    228ms
+
+================ RESULTS ================
+
+--- A_noul / judge_code ---
+  n                            20
+  jev_acc                      1.0
+  jev_precision                1.0
+  jev_recall                   1.0
+  escalated                    4
+  escalation_rate              0.2
+  effective_acc                0.95
+  effective_cost_per_item      0.0001325
+  median_ms                    239.1
+  cost_per_item                1.888e-05
+  out_tokens_total             400
+  synced_with_llm              20
+  local_acc                    0.5
+  llm_acc                      0.8
+  local_gate_effective_acc     0.8
+
+--- A_noul / guard ---
+  n                            16
+  jev_acc                      0.9375
+  jev_precision                1.0
+  jev_recall                   0.875
+  escalated                    4
+  escalation_rate              0.25
+  effective_acc                1.0
+  effective_cost_per_item      3.145e-05
+  median_ms                    232.9
+  cost_per_item                1.391e-05
+  out_tokens_total             656
+  synced_with_llm              16
+  local_acc                    0.75
+  llm_acc                      1.0
+  local_gate_effective_acc     0.75
+Traceback (most recent call last):
+  File "/private/tmp/jev/run_jev.py", line 163, in <module>
+    mm = m(rows, lambda r: r["jev"])
+  File "/private/tmp/jev/run_jev.py", line 148, in m
+    "effective_acc": round(sum(1 for r in rows
+                           ~~~^^^^^^^^^^^^^^^^
+                               if (pred(r) if r[conf_key] >= THRESH else r["llm"]) == r["label"]) / n, 3),
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/jev/run_jev.py", line 149, in <genexpr>
+    if (pred(r) if r[conf_key] >= THRESH else r["llm"]) == r["label"]) / n, 3),
+                                              ~^^^^^^^
+KeyError: 'llm'
