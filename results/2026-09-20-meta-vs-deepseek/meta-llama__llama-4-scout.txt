@@ -1,0 +1,43 @@
+CODE:
+```python
+def is_valid_isbn10(code: str) -> bool:
+    """
+    Validate an ISBN-10 string.
+
+    Args:
+    code (str): The ISBN-10 string to validate.
+
+    Returns:
+    bool: True if the ISBN-10 string is valid, False otherwise.
+    """
+    # Remove hyphens from the code
+    code = code.replace("-", "")
+
+    # Check if the code has exactly 10 characters
+    if len(code) != 10:
+        return False
+
+    # Initialize the sum of weighted digits
+    weighted_sum = 0
+
+    # Iterate over the digits in the code
+    for i, char in enumerate(code):
+        # Check if the character is a digit or 'X' in the last position
+        if (char.isdigit() or (char.upper() == 'X' and i == 9)):
+            # Convert 'X' to 10
+            digit = 10 if char.upper() == 'X' else int(char)
+            # Add the weighted digit to the sum
+            weighted_sum += digit * (10 - i)
+        else:
+            # If the character is not a digit or 'X', return False
+            return False
+
+    # Check if the weighted sum is divisible by 11
+    return weighted_sum % 11 == 0
+```
+
+EXPLANATION:
+The checksum of an ISBN-10 string works by calculating a weighted sum of its digits, where the weights decrease from 10 to 1. The weighted sum is calculated as `d1 * 10 + d2 * 9 + ... + d9 * 1 + d10 * 0`, where `d10` can be 'X' (value 10) in the last position. The checksum is valid if the weighted sum is divisible by 11. This catches transposition errors because if two digits are swapped, the weighted sum will change by a multiple of 11 if and only if the swap involves two digits that are not adjacent (or involves the 'X' character). This is because the difference between the weighted sums will be a multiple of 11 if and only if the swap involves two digits with weights that add up to 11 (e.g., 10 and 1, 9 and 2, etc.).
+
+EDGE_CASE:
+ISBN-10 strings with a single hyphen in the middle may be incorrectly split into two parts, however, my code handles this by removing all hyphens before validation.

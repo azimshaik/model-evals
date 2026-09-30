@@ -1,0 +1,20 @@
+[
+ {
+  "model": "deepseek/deepseek-v4-flash",
+  "elapsed_s": 31.9,
+  "verified": "8/9 | fails: [('0-306-40615-2 ', True)]",
+  "in_tok": 174,
+  "out_tok": 2157,
+  "cost_usd": 0.000342,
+  "file": "deepseek__deepseek-v4-flash.txt"
+ },
+ {
+  "model": "meta-llama/llama-4-scout",
+  "elapsed_s": 28.3,
+  "verified": "8/9 | fails: [('0-306-40615-2 ', True)]",
+  "in_tok": 176,
+  "out_tok": 514,
+  "cost_usd": 0.000172,
+  "file": "meta-llama__llama-4-scout.txt"
+ }
+]

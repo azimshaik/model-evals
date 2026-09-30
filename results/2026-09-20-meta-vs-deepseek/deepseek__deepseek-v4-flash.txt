@@ -1,0 +1,32 @@
+CODE:
+```python
+def is_valid_isbn10(code: str) -> bool:
+    # Remove hyphens
+    code = code.replace('-', '')
+    # Must be exactly 10 characters
+    if len(code) != 10:
+        return False
+    # First nine characters must be digits
+    if not code[:9].isdigit():
+        return False
+    # Last character must be a digit or 'X'/'x'
+    last = code[-1].upper()
+    if not (last.isdigit() or last == 'X'):
+        return False
+    # Compute weighted sum
+    total = 0
+    for i, ch in enumerate(code):
+        if ch.isdigit():
+            digit = int(ch)
+        else:  # must be 'X' (only possible at last position)
+            digit = 10
+        weight = 10 - i
+        total += digit * weight
+    return total % 11 == 0
+```
+
+EXPLANATION:
+The ISBN-10 checksum uses a weighted sum of the ten digits (including the check digit) with weights decreasing from 10 to 1. The sum must be divisible by 11. This scheme catches transposition errors because adjacent digits have weights differing by exactly 1, so swapping two adjacent digits changes the sum by the difference of the digits, which is rarely a multiple of 11 (only when the digits are equal), making most transpositions detectable.
+
+EDGE_CASE:
+The check digit 'X' (representing 10) is often mishandled, especially when the string contains hyphens; many implementations either fail to convert 'X' to 10 or incorrectly treat it as a digit, but my code handles this by stripping hyphens, converting the last character to uppercase, and mapping 'X' to 10.
