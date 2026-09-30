@@ -2,7 +2,7 @@
 
 **Subject:** a *typed-decision* model (Jev, TypeSafe System One) vs two baselines on decision-shaped sub-tasks.
 **Endpoint:** `POST https://api.typesafe.ai/v1/systemone` · alias `jev-latest` (server reported `jev-1.13.0`)
-**Baselines:** the 322M open-weight decision model from our earlier local benchmark (`aac6fef/laya-multilingual-mlx`, MLX, Apple M1 Pro) and a cloud LLM judge (`deepseek-v4-flash`, temperature 0).
+**Baselines:** the 322M open-weight decision model from our earlier local benchmark (`aac6fef/laya-multilingual-mlx`, MLX, local Apple silicon) and a cloud LLM judge (`deepseek-v4-flash`, temperature 0).
 **Gate:** decide with the decision model when confidence ≥ **0.70**, otherwise defer to the LLM judge.
 **Total cost of the run: $0.0013** (72 calls, 36 items × 2 arms).
 
@@ -45,7 +45,7 @@
 3. **Escalating is not automatically an upgrade.** On task 1 the gate *lowered* accuracy from 1.00 to 0.95 (one deferred item was one the LLM got wrong) at ~7× the cost. A gate only pays where the fallback is genuinely better on that task.
 4. **A `noul` question has no `confidence` field.** TypeSafe derives confidence from a *distribution* (`(count × peak − 1)/(count − 1)`), so a binary yes/no has none — you either derive a margin (`2·|p − 0.5|`) or ask a 2-option `choice`. Both arms produced **identical verdicts on all 36 items**, so the phrasing changed only whether a vendor confidence was available.
 5. **Reported usage does not match the "0 output tokens" framing.** The responses carry `usage.output_tokens` ≈ 20 per question (400 tokens for 20 items; 656 for the two-question guard arm). Pricing is still $0 for output, so the invoice claim holds — the "no token generation at all" description does not match the payload.
-6. **Latency is the one axis where the local model still wins**: 19–25 ms compute-only on an M1 Pro vs ~235 ms for a hosted call that includes network. If a decision is on a user's critical path and 200 ms matters, that is the trade.
+6. **Latency is the one axis where the local model still wins**: 19–25 ms compute-only on local Apple silicon vs ~235 ms for a hosted call that includes network. If a decision is on a user's critical path and 200 ms matters, that is the trade.
 
 ## Caveats
 

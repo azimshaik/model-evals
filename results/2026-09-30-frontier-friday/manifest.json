@@ -22,7 +22,7 @@
     "guard": "8 jailbreak/injection probes and 8 benign requests, labels by construction"
   },
   "baselines": {
-    "local_322m": "aac6fef/laya-multilingual-mlx (mmBERT-base, 322M, FP16) on Apple M1 Pro, MLX",
+    "local_322m": "aac6fef/laya-multilingual-mlx (mmBERT-base, 322M, FP16) on local Apple silicon, MLX",
     "llm_judge": "deepseek-v4-flash, temperature 0; verdicts reused from the recorded local run (identical prompts)"
   },
   "no_tuning": "no item was used to tune prompts for any of the three passes",
